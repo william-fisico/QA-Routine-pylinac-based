@@ -4,7 +4,7 @@ from typing import Union, List, Optional
 import argue
 import numpy as np
 
-from pylinac.core.pdf import PylinacCanvas
+from pylinac_dev.core.pdf import PylinacCanvas
 from . import tg51 as _tg51
 from .tg51 import mmHg2kPa, mbar2kPa, fahrenheit2celsius, tpr2010_from_pdd2010  # make available to module
 from ..core.utilities import is_close, Structure, open_path

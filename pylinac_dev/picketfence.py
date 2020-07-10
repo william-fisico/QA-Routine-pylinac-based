@@ -1,3 +1,14 @@
+###########################################
+# William A. P. dos Santos                #
+# william.wapsantos@gmail.com             #
+#                                         #
+# Modificando Picket Fence do Pylinac     #
+# para utilizar com aceleradores Elekta   #
+#                                         #
+# 09 de julho de 2020                     #
+###########################################
+
+
 """The picket fence module is meant for analyzing EPID images where a "picket fence" MLC pattern has been made.
 Physicists regularly check MLC positioning through this test. This test can be done using film and one can
 "eyeball" it, but this is the 21st century and we have numerous ways of quantifying such data. This module
@@ -25,8 +36,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
-from pylinac.core.typing import NumberLike
-from pylinac.core.utilities import open_path
+from pylinac_dev.core.typing import NumberLike
+from pylinac_dev.core.utilities import open_path
 from .core import image
 from .core.geometry import Line, Rectangle, Point
 from .core.io import get_url, retrieve_demo_file

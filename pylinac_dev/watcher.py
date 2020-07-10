@@ -17,13 +17,13 @@ import zipfile
 import yagmail
 import yaml
 
-from pylinac.core.decorators import value_accept
-from pylinac.core.io import retrieve_demo_file, is_dicom_image
-from pylinac.core.image import prepare_for_classification, DicomImage
+from pylinac_dev.core.decorators import value_accept
+from pylinac_dev.core.io import retrieve_demo_file, is_dicom_image
+from pylinac_dev.core.image import prepare_for_classification, DicomImage
 # from pylinac.core import schedule
 
-from pylinac import DRMLC, DRGS, Starshot, PicketFence, WinstonLutz, LeedsTOR, StandardImagingQC3, load_log, LasVegas
-from pylinac.log_analyzer import IMAGING
+from pylinac_dev import DRMLC, DRGS, Starshot, PicketFence, WinstonLutz, LeedsTOR, StandardImagingQC3, load_log, LasVegas
+from pylinac_dev.log_analyzer import IMAGING
 
 logger = logging.getLogger("pylinac")
 

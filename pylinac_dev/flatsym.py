@@ -6,7 +6,7 @@ from typing import Tuple, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pylinac.core.utilities import open_path
+from pylinac_dev.core.utilities import open_path
 from .core.exceptions import NotAnalyzed
 from .core.io import retrieve_demo_file
 from .core import image

@@ -1,0 +1,14 @@
+MLC
+	- Fabricante
+		- Tipo do mlc
+			- Número de lâminas
+			- Tamanho das lâminas
+
+Painel e Imagem
+	- SID
+	- SAD
+	- Translação do painel
+
+Análise
+	- Identificar o número de cada par de lâmina considerando a translação do painel
+	- Obter resultado individual de cada par de lâmina
