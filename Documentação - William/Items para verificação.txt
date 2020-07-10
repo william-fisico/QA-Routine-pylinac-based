@@ -1,7 +1,0 @@
-Verificar no arquivo de setup.py
-	- Licença
-	- Informações do autor
-
-Verificar no arquivo picketfence.py
-	- Descrição inicial
-	- Características

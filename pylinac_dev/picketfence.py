@@ -240,7 +240,9 @@ class PicketFence:
 
     def analyze(self, tolerance: float=0.5, action_tolerance: float=None, hdmlc: bool=False, num_pickets: int=None,
                 sag_adjustment: Union[float, int]=0,
-                orientation: str=None, invert: bool=False):
+                orientation: str=None, invert: bool=False,
+                mlc_model: str=None): # mlc_model : Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+
         """Analyze the picket fence image.
 
         Parameters
@@ -299,7 +301,7 @@ class PicketFence:
 
         """Pre-analysis"""
         self._orientation = orientation
-        self.settings = Settings(self.orientation, tolerance, action_tolerance, hdmlc, self.image, self._log_fits)
+        self.settings = Settings(self.orientation, tolerance, action_tolerance, hdmlc, self.image, self._log_fits, mlc_model)
         # adjust for sag
         if sag_adjustment != 0:
             sag_pixels = int(round(sag_adjustment * self.settings.dpmm))
@@ -308,6 +310,7 @@ class PicketFence:
         """Analysis"""
         self.pickets = PicketManager(self.image, self.settings, num_pickets)
         self._is_analyzed = True
+
 
     def plot_analyzed_image(self, guard_rails: bool=True, mlc_peaks: bool=True, overlay: bool=True,
                             leaf_error_subplot: bool=True, show: bool=True):
@@ -532,7 +535,7 @@ class Overlay:
 
 class Settings:
     """Simple class to hold various settings and info for PF analysis/plotting."""
-    def __init__(self, orientation, tolerance, action_tolerance, hdmlc, image, log_fits):
+    def __init__(self, orientation, tolerance, action_tolerance, hdmlc, image, log_fits, mlc_model):
         self.orientation = orientation
         self.tolerance = tolerance
         self.action_tolerance = action_tolerance
@@ -540,6 +543,7 @@ class Settings:
         self.image = image
         self.dpmm = image.dpmm
         self.mmpd = 1/image.dpmm
+        self.mlc_model = mlc_model
         try:
             self.image_center = image.cax
         except AttributeError:
@@ -556,27 +560,76 @@ class Settings:
 
     @property
     def small_leaf_width(self) -> int:
+
         """The width of a "small" leaf in pixels."""
-        leaf_width_mm = 5
-        leaf_width_pixels = leaf_width_mm * self.dpmm
-        if self.hdmlc:
-            leaf_width_pixels /= 2
-        return leaf_width_pixels
+        # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+        if self.mlc_model == 'Millennium MLC':
+        	small_leaf_width_mm = 5
+        elif self.mlc_model == 'Millennium HDMLC':
+        	small_leaf_width_mm = 5/2
+        elif self.mlc_model == 'Agility':
+        	small_leaf_width_mm = 5
+        elif self.mlc_model == 'MLCi2':
+        	small_leaf_width_mm = 10
+        elif self.mlc_model == 'Beam Modulator':
+        	small_leaf_width_mm = 4
+        else :
+        	small_leaf_width_mm = 10
+        small_leaf_width_pixels = small_leaf_width_mm * self.dpmm
+        return small_leaf_width_pixels
 
     @property
     def large_leaf_width(self) -> int:
         """The width of a "large" leaf in pixels."""
-        return self.small_leaf_width * 2
+         # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+        if self.mlc_model == 'Millennium MLC':
+        	large_leaf_width_mm = 10
+        elif self.mlc_model == 'Millennium HDMLC':
+        	large_leaf_width_mm = 10/2
+        elif self.mlc_model == 'Agility':
+        	large_leaf_width_mm = 5
+        elif self.mlc_model == 'MLCi2':
+        	large_leaf_width_mm = 10
+        elif self.mlc_model == 'Beam Modulator':
+        	large_leaf_width_mm = 4
+        else :
+        	large_leaf_width_mm = 10
+        large_leaf_width_pixels = large_leaf_width_mm * self.dpmm
+        return large_leaf_width_pixels
 
     @property
     def number_small_leaves(self) -> int:
-        """The number of small leaves; depends on HDMLC status."""
-        return 40 if not self.hdmlc else 32
+         # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+        if self.mlc_model == 'Millennium MLC':
+            n_leaves = 40
+        elif self.mlc_model == 'Millennium HDMLC':
+            n_leaves = 32
+        elif self.mlc_model == 'Agility':
+            n_leaves = 20
+        elif self.mlc_model == 'MLCi2':
+            n_leaves = 20
+        elif self.mlc_model == 'Beam Modulator':
+            n_leaves = 20
+        else :
+            n_leaves = 20
+        return n_leaves
 
     @property
     def number_large_leaves(self) -> int:
-        """The number of large leaves; depends on HDMLC status."""
-        return 20 if not self.hdmlc else 28
+         # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+        if self.mlc_model == 'Millennium MLC':
+            n_leaves = 20
+        elif self.mlc_model == 'Millennium HDMLC':
+            n_leaves = 28
+        elif self.mlc_model == 'Agility':
+            n_leaves = 20
+        elif self.mlc_model == 'MLCi2':
+            n_leaves = 20
+        elif self.mlc_model == 'Beam Modulator':
+            n_leaves = 20
+        else :
+            n_leaves = 20
+        return n_leaves
 
     @property
     @lru_cache()
