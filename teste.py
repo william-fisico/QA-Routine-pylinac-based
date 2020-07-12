@@ -29,4 +29,4 @@ for mlc in x:
 	#print(mlc + " - Entrada")
 	pf.analyze(mlc_model=mlc, tolerance=0.28, action_tolerance=0.279, orientation='u')
 	print(pf.results())
-	#pf.plot_analyzed_image(leaf_error_subplot = True)
+	pf.plot_analyzed_image(leaf_error_subplot = True)
