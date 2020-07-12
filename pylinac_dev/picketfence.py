@@ -112,6 +112,7 @@ class PicketFence:
         >>> mypf.plot_analyzed_image()
     """
     def __init__(self, filename: str, filter: int=None, log: str=None, use_filename: bool=False):
+
         """
         Parameters
         ----------
@@ -138,6 +139,7 @@ class PicketFence:
         else:
             self._log_fits = None
         self._is_analyzed = False
+
 
     @classmethod
     def from_url(cls, url: str, filter: int=None):
@@ -178,6 +180,7 @@ class PicketFence:
         """Return the percentage of MLC positions under tolerance."""
         num = 0
         num_pass = 0
+        #self.pickets[k].error_array[n] ==> erro (em mm) do n-esimo par de lâminas no k-esimo picket
         for picket in self.pickets:
             num += len(picket.error_array)
             num_pass += sum(picket.error_array < self.settings.tolerance)
@@ -413,13 +416,13 @@ class PicketFence:
 
     def results(self) -> str:
         """Return results of analysis. Use with print()."""
-        pass_pct = self.percent_passing
+        pass_pct = self.percent_passing #ver linha 177
         offsets = ' '.join('{:.1f}'.format(pk.dist2cax) for pk in self.pickets)
         string = f"Picket Fence Results: \n{pass_pct:2.1f}% " \
-                 f"Passed\nMedian Error: {self.abs_median_error:2.3f}mm \n" \
-                 f"Mean picket spacing: {self.pickets.mean_spacing:2.1f}mm \n" \
+                 f"Passed\nMedian Error: {self.abs_median_error:2.3f} mm \n" \
+                 f"Mean picket spacing: {self.pickets.mean_spacing:2.1f} mm \n" \
                  f"Picket offsets from CAX (mm): {offsets}\n" \
-                 f"Max Error: {self.max_error:2.3f}mm on Picket: {self.max_error_picket}, Leaf: {self.max_error_leaf}"
+                 f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket}, Leaf: {self.max_error_leaf}"
         return string
 
     def publish_pdf(self, filename: str, notes: str=None, open_file: bool=False, metadata: dict=None):
@@ -636,6 +639,8 @@ class Settings:
     def leaf_centers(self) -> np.ndarray:
         """Return a set of leaf centers perpendicular to the leaf motion based on the position of the CAX."""
         # generate a set of leaf center points based on physical widths of large and small leaves
+
+        ''' Código Original
         first_shift = self.large_leaf_width * (self.number_large_leaves / 2 - 1) + self.large_leaf_width * 0.75
         second_shift = self.small_leaf_width * (self.number_small_leaves - 1) + self.large_leaf_width * 0.75
 
@@ -644,18 +649,32 @@ class Settings:
         large_leaf_section2 = (np.arange(
             self.number_large_leaves / 2) * self.large_leaf_width) + first_shift + second_shift
         leaf_centers = np.concatenate((large_leaf_section, small_leaf_section, large_leaf_section2))
+        '''
+        ### Inicio Código alterado ###
+       
+        first_shift = self.large_leaf_width * (self.number_large_leaves/2)
+        second_shift = self.small_leaf_width * (self.number_small_leaves)
+
+        large_leaf_section = np.arange(self.number_large_leaves / 2) * self.large_leaf_width + 0.5*self.large_leaf_width
+        small_leaf_section = (np.arange(self.number_small_leaves) * self.small_leaf_width) + first_shift + 0.5*self.small_leaf_width
+        large_leaf_section2 = (
+            np.arange(self.number_large_leaves / 2) * self.large_leaf_width) + first_shift + second_shift + 0.5*self.large_leaf_width
+        leaf_centers = np.concatenate((large_leaf_section, small_leaf_section, large_leaf_section2))
+        
+        ### Fim Código alterado ###
 
         # now adjust them to align with the iso
         if self.orientation == UP_DOWN:
-            leaf30_center = self.image_center.y - self.small_leaf_width / 2
+            middle_leaf_center = self.image_center.y - self.small_leaf_width / 2 #sel.image_center contem coordenadas do cax
             edge = self.image.shape[0]
         else:
-            leaf30_center = self.image_center.x - self.small_leaf_width / 2
+            middle_leaf_center = self.image_center.x - self.small_leaf_width / 2
             edge = self.image.shape[1]
-        adjustment = leaf30_center - leaf_centers[29]
+        adjustment = middle_leaf_center - leaf_centers[int(leaf_centers.shape[0]/2)-1]
         leaf_centers += adjustment
 
         # only include values that are reasonable as values might extend past image (e.g. with small SID)
+        # IMPORTANTE: Em campos que ocumpam todo o painel a(s) primeira(s) e a(s) última(s) lâminas são excluídas da análise
         values_in_image = (leaf_centers > 0 + self.large_leaf_width / 2) & (
         leaf_centers < edge - self.large_leaf_width / 2)
         leaf_centers = leaf_centers[values_in_image]
@@ -694,14 +713,14 @@ class PicketManager:
 
     def find_pickets(self):
         """Find the pickets of the image."""
-        leaf_prof = self.image_mlc_inplane_mean_profile
-        peak_idxs = leaf_prof.find_peaks(min_distance=0.02, threshold=0.5, max_number=self.num_pickets)
+        leaf_prof = self.image_mlc_inplane_mean_profile # type(leaf_prof) ==> <class 'pylinac_dev.core.profile.MultiProfile'>
+        peak_idxs = leaf_prof.find_peaks(min_distance=0.02, threshold=0.5, max_number=self.num_pickets) # está em core/profile.py
         peak_spacing = np.median(np.diff(np.sort(peak_idxs)))
         if np.isnan(peak_spacing):
             peak_spacing = 20
 
         for peak_idx in peak_idxs:
-            self.pickets.append(Picket(self.image, self.settings, peak_idx, peak_spacing/2))
+            self.pickets.append(Picket(self.image, self.settings, peak_idx, peak_spacing/2)) ### Pq dividir por 2 o peak_spacing
 
     @property
     def passed(self) -> bool:
@@ -718,10 +737,10 @@ class PicketManager:
     def image_mlc_inplane_mean_profile(self) -> MultiProfile:
         """A profile of the image along the MLC travel direction."""
         if self.settings.orientation == UP_DOWN:
-            leaf_prof = np.mean(self.image, 0)
+            leaf_prof = np.mean(self.image, 0)  # Calcula a média dos valores dos pixels para cada coluna da imagem com numpy.mean
         else:
-            leaf_prof = np.mean(self.image, 1)
-        return MultiProfile(leaf_prof)
+            leaf_prof = np.mean(self.image, 1)  # Calcula a média dos valores dos pixels para cada linha da imagem com numpy.mean
+        return MultiProfile(leaf_prof) # está em core/profile.py
 
     @property
     def mean_spacing(self) -> np.ndarray:
@@ -784,8 +803,8 @@ class Picket:
 
     @property
     def sample_width(self) -> float:
-        """The width to sample the MLC leaf (~40% of the leaf width)."""
-        return np.round(np.median(np.diff(self.settings.leaf_centers) * 2 / 5) / 2).astype(int)
+        """The width to sample the MLC leaf (~80% of the leaf width)."""
+        return np.round(np.median(np.diff(self.settings.leaf_centers) * 4/ 5) / 2).astype(int)
 
     @property
     @lru_cache()
