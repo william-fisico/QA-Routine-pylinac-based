@@ -180,7 +180,7 @@ class PicketFence:
         """Return the percentage of MLC positions under tolerance."""
         num = 0
         num_pass = 0
-        #self.pickets[k].error_array[n] ==> erro (em mm) do n-esimo par de lâminas no k-esimo picket
+        ###self.pickets[k].error_array[n] ==> erro (em mm) do n-esimo par de lâminas no k-esimo picket
         for picket in self.pickets:
             num += len(picket.error_array)
             num_pass += sum(picket.error_array < self.settings.tolerance)
@@ -244,7 +244,7 @@ class PicketFence:
     def analyze(self, tolerance: float=0.5, action_tolerance: float=None, hdmlc: bool=False, num_pickets: int=None,
                 sag_adjustment: Union[float, int]=0,
                 orientation: str=None, invert: bool=False,
-                mlc_model: str=None): # mlc_model : Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+                mlc_model: str=None): 
 
         """Analyze the picket fence image.
 
@@ -291,6 +291,15 @@ class PicketFence:
             If False (default), the inversion of the image is automatically detected and used.
             If True, the image inversion is reversed from the automatic detection. This is useful when runtime errors
             are encountered.
+        
+        mlc_model : None, str
+            
+            .. Adicionado em 11/07/2020
+
+            Se falso (default) ou o MLC não existe na lista pré-definida, assme um MLC de 40 lâminas de 1 cm 
+            Se pertence a lista pré-definida assume número de lâminas e tamanho de lâminas de acordo com modelo.
+            lista pré-definida : Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+
         """
         if action_tolerance is not None and tolerance < action_tolerance:
             raise ValueError("Tolerance cannot be lower than the action tolerance")
@@ -416,7 +425,7 @@ class PicketFence:
 
     def results(self) -> str:
         """Return results of analysis. Use with print()."""
-        pass_pct = self.percent_passing #ver linha 177
+        pass_pct = self.percent_passing #ver linha 177#
         offsets = ' '.join('{:.1f}'.format(pk.dist2cax) for pk in self.pickets)
         string = f"Picket Fence Results: \n{pass_pct:2.1f}% " \
                  f"Passed\nMedian Error: {self.abs_median_error:2.3f} mm \n" \
@@ -546,7 +555,7 @@ class Settings:
         self.image = image
         self.dpmm = image.dpmm
         self.mmpd = 1/image.dpmm
-        self.mlc_model = mlc_model
+        self.mlc_model = mlc_model #Ver linha 295
         try:
             self.image_center = image.cax
         except AttributeError:
@@ -565,7 +574,7 @@ class Settings:
     def small_leaf_width(self) -> int:
 
         """The width of a "small" leaf in pixels."""
-        # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+        ## possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
         if self.mlc_model == 'Millennium MLC':
         	small_leaf_width_mm = 5
         elif self.mlc_model == 'Millennium HDMLC':
@@ -584,7 +593,7 @@ class Settings:
     @property
     def large_leaf_width(self) -> int:
         """The width of a "large" leaf in pixels."""
-         # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+         ## possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
         if self.mlc_model == 'Millennium MLC':
         	large_leaf_width_mm = 10
         elif self.mlc_model == 'Millennium HDMLC':
@@ -602,7 +611,7 @@ class Settings:
 
     @property
     def number_small_leaves(self) -> int:
-         # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+         ## possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
         if self.mlc_model == 'Millennium MLC':
             n_leaves = 40
         elif self.mlc_model == 'Millennium HDMLC':
@@ -619,7 +628,7 @@ class Settings:
 
     @property
     def number_large_leaves(self) -> int:
-         # possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
+         ## possibles mlc models Millennium MLC, Millennium HDMLC, Agility, MLCi2, Beam Modulator
         if self.mlc_model == 'Millennium MLC':
             n_leaves = 20
         elif self.mlc_model == 'Millennium HDMLC':
@@ -650,7 +659,7 @@ class Settings:
             self.number_large_leaves / 2) * self.large_leaf_width) + first_shift + second_shift
         leaf_centers = np.concatenate((large_leaf_section, small_leaf_section, large_leaf_section2))
         '''
-        ### Inicio Código alterado ###
+        #### Inicio Código alterado ####
        
         first_shift = self.large_leaf_width * (self.number_large_leaves/2)
         second_shift = self.small_leaf_width * (self.number_small_leaves)
@@ -661,7 +670,7 @@ class Settings:
             np.arange(self.number_large_leaves / 2) * self.large_leaf_width) + first_shift + second_shift + 0.5*self.large_leaf_width
         leaf_centers = np.concatenate((large_leaf_section, small_leaf_section, large_leaf_section2))
         
-        ### Fim Código alterado ###
+        #### Fim Código alterado ####
 
         # now adjust them to align with the iso
         if self.orientation == UP_DOWN:
@@ -713,14 +722,14 @@ class PicketManager:
 
     def find_pickets(self):
         """Find the pickets of the image."""
-        leaf_prof = self.image_mlc_inplane_mean_profile # type(leaf_prof) ==> <class 'pylinac_dev.core.profile.MultiProfile'>
-        peak_idxs = leaf_prof.find_peaks(min_distance=0.02, threshold=0.5, max_number=self.num_pickets) # está em core/profile.py
+        leaf_prof = self.image_mlc_inplane_mean_profile ## type(leaf_prof) ==> <class 'pylinac_dev.core.profile.MultiProfile'>
+        peak_idxs = leaf_prof.find_peaks(min_distance=0.02, threshold=0.5, max_number=self.num_pickets) ## está em core/profile.py
         peak_spacing = np.median(np.diff(np.sort(peak_idxs)))
         if np.isnan(peak_spacing):
             peak_spacing = 20
 
         for peak_idx in peak_idxs:
-            self.pickets.append(Picket(self.image, self.settings, peak_idx, peak_spacing/2)) ### Pq dividir por 2 o peak_spacing
+            self.pickets.append(Picket(self.image, self.settings, peak_idx, peak_spacing/2)) #### Pq dividir por 2 o peak_spacing???
 
     @property
     def passed(self) -> bool:
@@ -737,10 +746,10 @@ class PicketManager:
     def image_mlc_inplane_mean_profile(self) -> MultiProfile:
         """A profile of the image along the MLC travel direction."""
         if self.settings.orientation == UP_DOWN:
-            leaf_prof = np.mean(self.image, 0)  # Calcula a média dos valores dos pixels para cada coluna da imagem com numpy.mean
+            leaf_prof = np.mean(self.image, 0)  ## Calcula a média dos valores dos pixels para cada coluna da imagem com numpy.mean
         else:
-            leaf_prof = np.mean(self.image, 1)  # Calcula a média dos valores dos pixels para cada linha da imagem com numpy.mean
-        return MultiProfile(leaf_prof) # está em core/profile.py
+            leaf_prof = np.mean(self.image, 1)  ## Calcula a média dos valores dos pixels para cada linha da imagem com numpy.mean
+        return MultiProfile(leaf_prof) ## está em core/profile.py
 
     @property
     def mean_spacing(self) -> np.ndarray:
@@ -803,8 +812,8 @@ class Picket:
 
     @property
     def sample_width(self) -> float:
-        """The width to sample the MLC leaf (~80% of the leaf width)."""
-        return np.round(np.median(np.diff(self.settings.leaf_centers) * 4/ 5) / 2).astype(int)
+        """The width to sample the MLC leaf (~80% of the leaf width).""" #alterado de 40% para 80%
+        return np.round(np.median(np.diff(self.settings.leaf_centers) * 4 / 5) / 2).astype(int) # alterado de 2/5 para 4/5
 
     @property
     @lru_cache()
