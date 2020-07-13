@@ -25,7 +25,7 @@ from PIL.TiffTags import TAGS
 import numpy as np
 import matplotlib.pyplot as plt
 
-def convert(nome_tiff, nome_dicom, translacao):
+def convert(nome_tiff, nome_dicom, translacao, sad, sid):
 	global ds
 	# Nomes do arquivo
 	filename_little_endian = nome_dicom
@@ -66,6 +66,10 @@ def convert(nome_tiff, nome_dicom, translacao):
 
 	tiff_meta_dict = {TAGS[key] : tiff_file.tag[key] for key in tiff_file.tag.keys()}
 
+	x_res = 0.406
+	dpmm = (1/x_res)*sid/sad #pontos por mm no isocentro
+	translacao = [translacao[0]*dpmm,translacao[1]*dpmm] # deslocamento em pixel no painel
+	
 	ds.add_new([0x0008,0x0016], 'UI','1.2.840.10008.5.1.4.1.1.481.1') #SOP Class UID
 	ds.add_new([0x0008,0x0018], 'UI','1.2.246.352.81.3.273720375.51644.19651.179.0') #SOP Instance UID
 	ds.add_new([0x0028,0x0010], 'US',tiff_meta_dict['ImageLength'][0]) #rows
@@ -79,7 +83,6 @@ def convert(nome_tiff, nome_dicom, translacao):
 	ds.add_new([0x3002,0x0022], 'DS', 1000.0) # Radiation Machine SAD
 	ds.add_new([0x3002,0x0026], 'DS', 1600.0) # RT Image SID
 	ds.add_new([0x5000,0x0030], 'SH', ['PIXL', 'PIXL']) #Axis Units
-	x_res = 0.406
 	ds.add_new([0x3002,0x0011], 'DS', [x_res,x_res]) #Image Plane Pixel Spacing
 	ds.add_new([0x3002,0x000D], 'DS', translacao) # X-Ray Image Receptor Translation Attribute ==> https://dicom.innolitics.com/ciods/rt-beams-delivery-instruction/rt-beams-delivery-instruction/00741020/00741030/3002000d
 	print('Pronto!')
@@ -87,8 +90,8 @@ def convert(nome_tiff, nome_dicom, translacao):
 	#plt.show()
 	#print(ds)
 
-def picketfence(nome_tiff, nome_dicom, translacao):
-	convert(nome_tiff, nome_dicom, translacao)
+def picketfence(nome_tiff, nome_dicom, translacao, sad, sid):
+	convert(nome_tiff, nome_dicom, translacao, sad, sid)
 
 def get_dicom():
 	return ds

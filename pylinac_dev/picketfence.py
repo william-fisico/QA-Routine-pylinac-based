@@ -365,7 +365,8 @@ class PicketFence:
             o.add_to_axes(ax)
 
         # plot CAX
-        ax.plot(self.image.center.x, self.image.center.y, 'r+', ms=12, markeredgewidth=3)
+        ax.plot(self.image.center.x, self.image.center.y, 'r+', ms=12, markeredgewidth=3) #Image CAX
+        ax.plot(self.image.cax.x, self.image.cax.y, 'g+', ms=12, markeredgewidth=3) #Beam CAX
 
         # tighten up the plot view
         ax.set_xlim([0, self.image.shape[1]])
@@ -431,8 +432,12 @@ class PicketFence:
                  f"Passed\nMedian Error: {self.abs_median_error:2.3f} mm \n" \
                  f"Mean picket spacing: {self.pickets.mean_spacing:2.1f} mm \n" \
                  f"Picket offsets from CAX (mm): {offsets}\n" \
-                 f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket}, Leaf: {self.max_error_leaf}"
+                 f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket}, Leaf: {self.settings.leafs_idx_in_image[self.max_error_leaf]}"
         return string
+
+    def get_test_pickets(self):
+        #Retorna lista com todos os pickets e o número das lâminas presentes na imagem
+        return(self.pickets.pickets,self.settings.leafs_idx_in_image)
 
     def publish_pdf(self, filename: str, notes: str=None, open_file: bool=False, metadata: dict=None):
         """Publish (print) a PDF containing the analysis, images, and quantitative results.
@@ -466,7 +471,7 @@ class PicketFence:
             f'Leaves passing (%): {self.percent_passing:2.1f}',
             f'Absolute median error (mm): {self.abs_median_error:2.3f}',
             f'Mean picket spacing (mm): {self.pickets.mean_spacing:2.1f}',
-            f'Maximum error (mm): {self.max_error:2.3f} on Picket {self.max_error_picket}, Leaf {self.max_error_leaf}',
+            f'Maximum error (mm): {self.max_error:2.3f} on Picket {self.max_error_picket}, Leaf {self.settings.leafs_idx_in_image[self.max_error_leaf]}',
         ]
         text.append(f'Gantry Angle: {self.image.gantry_angle:2.2f}')
         text.append(f'Collimator Angle: {self.image.collimator_angle:2.2f}')
@@ -556,6 +561,7 @@ class Settings:
         self.dpmm = image.dpmm
         self.mmpd = 1/image.dpmm
         self.mlc_model = mlc_model #Ver linha 295
+        self.leafs_idx_in_image = None # Número das lâminas que aparecem na imagem
         try:
             self.image_center = image.cax
         except AttributeError:
@@ -669,12 +675,14 @@ class Settings:
         large_leaf_section2 = (
             np.arange(self.number_large_leaves / 2) * self.large_leaf_width) + first_shift + second_shift + 0.5*self.large_leaf_width
         leaf_centers = np.concatenate((large_leaf_section, small_leaf_section, large_leaf_section2))
+
+        leafs_idx = np.flip(np.arange(1,self.number_small_leaves+self.number_large_leaves+1)) # cria array com o número das lâminas
         
         #### Fim Código alterado ####
 
         # now adjust them to align with the iso
         if self.orientation == UP_DOWN:
-            middle_leaf_center = self.image_center.y - self.small_leaf_width / 2 #sel.image_center contem coordenadas do cax
+            middle_leaf_center = self.image_center.y - self.small_leaf_width / 2 #self.image_center contem coordenadas do cax
             edge = self.image.shape[0]
         else:
             middle_leaf_center = self.image_center.x - self.small_leaf_width / 2
@@ -686,8 +694,9 @@ class Settings:
         # IMPORTANTE: Em campos que ocumpam todo o painel a(s) primeira(s) e a(s) última(s) lâminas são excluídas da análise
         values_in_image = (leaf_centers > 0 + self.large_leaf_width / 2) & (
         leaf_centers < edge - self.large_leaf_width / 2)
-        leaf_centers = leaf_centers[values_in_image]
-        return np.round(leaf_centers).astype(int)
+        leaf_centers_in_image = leaf_centers[values_in_image]
+        self.leafs_idx_in_image = leafs_idx[values_in_image]
+        return np.round(leaf_centers_in_image).astype(int)
 
 
 class PicketManager:
@@ -902,7 +911,8 @@ class Picket:
         else:
             axis = 'y'
             p1 = Point(x_data[idx], y_data[idx])
-        return (getattr(self.image.center, axis) - getattr(p1, axis)) * self.settings.mmpd
+        #return (getattr(self.image.center, axis) - getattr(p1, axis)) * self.settings.mmpd #Dist to Image CAX
+        return (getattr(self.image.cax, axis) - getattr(p1, axis)) * self.settings.mmpd #Dist to Beam CAX
 
     @property
     def left_guard(self):
