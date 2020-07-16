@@ -13,7 +13,7 @@
 #######################################################
 
 
-# Referenca para criar arquivo Dicom: https://pydicom.github.io/pydicom/dev/auto_examples/input_output/plot_write_dicom.html#sphx-glr-auto-examples-input-output-plot-write-dicom-py
+# Referencia para criar arquivo Dicom: https://pydicom.github.io/pydicom/dev/auto_examples/input_output/plot_write_dicom.html#sphx-glr-auto-examples-input-output-plot-write-dicom-py
 
 import os
 import tempfile
@@ -25,13 +25,13 @@ from PIL.TiffTags import TAGS
 import numpy as np
 import matplotlib.pyplot as plt
 
-def convert(nome_tiff, nome_dicom, translacao, sad, sid):
+def convert(nome_tiff, nome_dicom, translacao, sad, sid, gantry, colimador, x_res):
 	global ds
-	# Nomes do arquivo
+	# Nome do arquivo
 	filename_little_endian = nome_dicom
 
 	# Criando arquivos com informações minimas
-	print('Criando arquivo Dicom Image')
+	#print('Criando arquivo Dicom Image')
 	file_meta = FileMetaDataset()
 	file_meta.MediaStorageSOPClassUID = '1.2.840.10008.5.1.4.1.1.481.1' #http://dicom.nema.org/dicom/2013/output/chtml/part04/sect_I.4.html
 	file_meta.MediaStorageSOPInstanceUID = "1.2.246.352.81.3.273720375.51644.19651.179.0"
@@ -66,7 +66,6 @@ def convert(nome_tiff, nome_dicom, translacao, sad, sid):
 
 	tiff_meta_dict = {TAGS[key] : tiff_file.tag[key] for key in tiff_file.tag.keys()}
 
-	x_res = 0.406
 	dpmm = (1/x_res)*sid/sad #pontos por mm no isocentro
 	translacao = [translacao[0]*dpmm,translacao[1]*dpmm] # deslocamento em pixel no painel
 	
@@ -85,15 +84,19 @@ def convert(nome_tiff, nome_dicom, translacao, sad, sid):
 	ds.add_new([0x5000,0x0030], 'SH', ['PIXL', 'PIXL']) #Axis Units
 	ds.add_new([0x3002,0x0011], 'DS', [x_res,x_res]) #Image Plane Pixel Spacing
 	ds.add_new([0x3002,0x000D], 'DS', translacao) # X-Ray Image Receptor Translation Attribute ==> https://dicom.innolitics.com/ciods/rt-beams-delivery-instruction/rt-beams-delivery-instruction/00741020/00741030/3002000d
-	ds.add_new([0x300A,0x011E], 'DS', 0.0)# Gantry Angle
-	ds.add_new([0x300A,0x0120], 'DS', 0.0)# Beam Limiting Device (Colimator) Angle
-	print('Pronto!')
+	ds.add_new([0x300A,0x011E], 'DS', gantry)# Gantry Angle
+	ds.add_new([0x300A,0x0120], 'DS', colimador)# Beam Limiting Device (Colimator) Angle
+	
+	ds.save_as(nome_dicom)
+	#print(nome_dicom)
+
+	#print('Pronto!')
 	#plt.imshow(ds.pixel_array)
 	#plt.show()
 	#print(ds)
 
-def picketfence(nome_tiff, nome_dicom, translacao, sad, sid):
-	convert(nome_tiff, nome_dicom, translacao, sad, sid)
+#def picketfence(nome_tiff, nome_dicom, translacao, sad, sid):
+#	convert(nome_tiff, nome_dicom, translacao, sad, sid)
 
 def get_dicom():
 	return ds

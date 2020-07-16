@@ -373,6 +373,9 @@ class PicketFence:
         ax.set_ylim([0, self.image.shape[0]])
         ax.axis('off')
 
+        self.fig_plot = fig
+        self.ax = ax
+
         if show:
             plt.show()
 
@@ -423,6 +426,12 @@ class PicketFence:
         plt.savefig(filename, **kwargs)
         if isinstance(filename, str):
             print(f"Picket fence image saved to: {osp.abspath(filename)}")
+
+    def get_analyzed_image(self, guard_rails: bool=True, mlc_peaks: bool=True, overlay: bool=True,
+                            leaf_error_subplot: bool=False):
+        #Retorna plot da analise
+        self.plot_analyzed_image(guard_rails, mlc_peaks, overlay, leaf_error_subplot=leaf_error_subplot, show=False)
+        return (self.fig_plot, self.ax)
 
     def results(self) -> str:
         """Return results of analysis. Use with print()."""
