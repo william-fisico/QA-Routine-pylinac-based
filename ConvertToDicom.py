@@ -85,6 +85,8 @@ def convert(nome_tiff, nome_dicom, translacao, sad, sid):
 	ds.add_new([0x5000,0x0030], 'SH', ['PIXL', 'PIXL']) #Axis Units
 	ds.add_new([0x3002,0x0011], 'DS', [x_res,x_res]) #Image Plane Pixel Spacing
 	ds.add_new([0x3002,0x000D], 'DS', translacao) # X-Ray Image Receptor Translation Attribute ==> https://dicom.innolitics.com/ciods/rt-beams-delivery-instruction/rt-beams-delivery-instruction/00741020/00741030/3002000d
+	ds.add_new([0x300A,0x011E], 'DS', 0.0)# Gantry Angle
+	ds.add_new([0x300A,0x0120], 'DS', 0.0)# Beam Limiting Device (Colimator) Angle
 	print('Pronto!')
 	#plt.imshow(ds.pixel_array)
 	#plt.show()
