@@ -8,19 +8,20 @@ import numpy as np
 a = np.array([0,1,2,3,4,5,6,7,8,9,10])
 print(np.flip(a))
 '''
-# Painel deslocado na direção de Y2 (iso para inferior) ==> y>0
-desloc = [0.0,70.0] #deslocamento do painel em mm 
+# Painel deslocado na direção de Y2 (iso para inferior) ==> y<0
+# Painel deslocado na direção de Y1 (iso para superior) ==> y>0
+desloc = [0.0,80.0] #deslocamento do painel em mm 
 sad = 1000.0 # mm
 sid = 1600.0 # mm
-ConvertToDicom.picketfence('G0C0Y2.tif','G0C0Y2_teste.dcm',desloc, sad, sid)
-ConvertToDicom.save_dicom('G0C0Y2_teste.dcm')
+ConvertToDicom.convert('./Imagens/0Y2-20Y1.tif','./Imagens/0Y2-20Y1.dcm',desloc, sad, sid,0.0,0.0, 0.406)
+#ConvertToDicom.save_dicom('/Imagens/MLCi2/TESTE/10Y2-10Y1/10Y2-10Y1-ERRO3.dcm')
 #ds = pydicom.filereader.read_file('EPID-PF-LR.dcm')
 #print(ds)
 '''
 plt.imshow(ds.pixel_array)
 plt.show()
 '''
-pf_img = ['G0C0Y2_teste','EPID-PF-LR']
+pf_img = ['./Imagens/0Y2-20Y1','EPID-PF-LR']
 #pf_img = r"EPID-PF-LR.dcm"
 x = ['MLCi2'] # ['Millennium MLC', 'Millennium HDMLC', 'Agility', 'MLCi2', 'Beam Modulator', 'MLC Primus']
 
@@ -56,6 +57,4 @@ for mlc in x:
 				print(text)
 		except:
 			print('Erro')
-
 '''
-
