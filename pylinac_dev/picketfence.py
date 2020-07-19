@@ -685,7 +685,8 @@ class Settings:
             np.arange(self.number_large_leaves / 2) * self.large_leaf_width) + first_shift + second_shift + 0.5*self.large_leaf_width
         leaf_centers = np.concatenate((large_leaf_section, small_leaf_section, large_leaf_section2))
 
-        leafs_idx = np.flip(np.arange(1,self.number_small_leaves+self.number_large_leaves+1)) # cria array com o número das lâminas
+        leafs_idx = np.arange(1,self.number_small_leaves+self.number_large_leaves+1) # cria array com o número das lâminas
+        # para inverter a ordem das laminas np.flip(leafs_idx)
         
         #### Fim Código alterado ####
 

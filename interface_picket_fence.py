@@ -10,18 +10,91 @@ from PIL import ImageTk,Image
 from tkinter import filedialog,messagebox
 import os
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import pydicom
 import numpy as np
 from PIL.TiffTags import TAGS
 import ConvertToDicom
 from pylinac_dev import PicketFence
+from tkinter import scrolledtext
 
 def teste():
     return
 
-def atualizar_janela_principal():
-    return
+def atualiza_criterios():
+    global tolerancia, limite_acao
+
+    try:
+        temp1 = float(tolerancia_entry.get())
+        temp2 = float(limite_acao_entry.get())
+        if temp1<temp2:
+            messagebox.showerror("Valores inválidos", "Valores inválidos.\nLimite de ação deve ser menor que a tolerância.\nNão foi possível atualizar os critérios de análise.")
+            toplevel_criterios.destroy()
+        elif temp1<0 or temp2<0:
+            messagebox.showerror("Valores inválidos", "Valores inválidos.\nOs valores fornecidos devem ser números reais positivos.\nNão foi possível atualizar os critérios de análise.")
+            toplevel_criterios.destroy()
+        else:
+            tolerancia = temp1
+            limite_acao = temp2
+            toplevel_criterios.destroy()
+    except:
+        messagebox.showerror("Valores inválidos", "Valores inválidos.\nOs valores fornecidos devem ser números reais positivos.\nNão foi possível atualizar os critérios de análise.")
+        toplevel_criterios.destroy()
+
+def criterios():
+    global tolerancia_entry, limite_acao_entry
+    global toplevel_criterios
+
+    toplevel_criterios = Toplevel()
+    toplevel_criterios.title('Critérios de análise')
+    toplevel_criterios.iconbitmap('Imagens/dirac_eqn.ico')
+
+    tolerancia_label = Label(toplevel_criterios,text="Tolerância (mm):", justify=LEFT)
+    limite_acao_label = Label(toplevel_criterios,text="Limite de ação (mm):", justify=LEFT)
+
+    tolerancia_entry = Entry(toplevel_criterios,width=8, borderwidth=5)
+    tolerancia_entry.insert(0,tolerancia)
+    limite_acao_entry = Entry(toplevel_criterios,width=8, borderwidth=5)
+    limite_acao_entry.insert(0,limite_acao)
+
+    btn_atualizar_criterios = Button(toplevel_criterios, text="Atualizar Valores", command=atualiza_criterios)
+    btn_fechar_criterios = Button(toplevel_criterios, text="Fechar", command=toplevel_criterios.destroy)
+
+    tolerancia_label.grid(row=0, column=0, padx=5, pady=5)
+    tolerancia_entry.grid(row=0, column=1, padx=5, pady=5)
+    limite_acao_label.grid(row=1, column=0, padx=5, pady=5)
+    limite_acao_entry.grid(row=1, column=1, padx=5, pady=5)
+    btn_atualizar_criterios.grid(row=2, column=0, padx=5, pady=5)
+    btn_fechar_criterios.grid(row=2, column=1, padx=5, pady=5)
+
+
+def opcoes_exibicao():
+    global toplevel_opcoes_exibicao
+
+    toplevel_opcoes_exibicao = Toplevel()
+    toplevel_opcoes_exibicao.title('Opções de exibição do resultado')
+    toplevel_opcoes_exibicao.iconbitmap('Imagens/dirac_eqn.ico')
+
+    lista_label_opcoes = ['Guard rails', 'MLC mlc_peaks', 'Overlay', 'Leaf error subplot']
+    lista_checkbox_opcoes = []
+
+    for i in range(0,4):
+        checkbox_temp = Checkbutton(toplevel_opcoes_exibicao, text=lista_label_opcoes[i], variable=lista_opcoes_exibicao[i], onvalue=True, offvalue=False)
+        lista_checkbox_opcoes.append(checkbox_temp)
+        if lista_opcoes_exibicao[i].get():
+            lista_checkbox_opcoes[i].select()
+        else:
+            lista_checkbox_opcoes[i].deselect()
+
+        lista_checkbox_opcoes[i].grid(row=i, column=0,padx=5, pady=5, sticky=W)
+
+    btn_fechar_opcoes = Button(toplevel_opcoes_exibicao, text="Fechar", command=toplevel_opcoes_exibicao.destroy)
+    btn_fechar_opcoes.grid(row=4,column=0, padx=5, pady=5, sticky=W+E)
+
+def on_closing():
+    if messagebox.askyesno("Sair", "Deseja fechar o programa?"):
+        root.quit()
+
 
 def atualizar_parametros(lista_entry):
     global gantry, colimador, sad, sid, x_res, translacao
@@ -40,7 +113,7 @@ def atualizar_parametros(lista_entry):
 
 def importar_dados(eh_dicom, filename):
     global gantry, colimador, sad, sid, x_res, translacao
-    global toplevel_importar, nome_dcm
+    global toplevel_importar, nome_dcm, btn_analisar
 
     if eh_dicom:
         nome_dcm = filename
@@ -48,6 +121,11 @@ def importar_dados(eh_dicom, filename):
         caminho,nome = os.path.split(os.path.splitext(filename)[0])
         nome_dcm = caminho + '/' + nome + '_pfDicom.dcm'
         ConvertToDicom.convert(filename, nome_dcm, translacao, sad, sid, gantry, colimador, x_res)
+    messagebox.showinfo("Arquivo importado", "Arquivo importado com sucesso.")
+    btn_analisar.grid_forget()
+    btn_analisar = Button(frame_analise, text='Analisar', command=analisar_pf)
+    btn_analisar.grid(row=0,column=1, pady=3, padx=5)
+    toplevel_importar.destroy()
 
 
     
@@ -60,12 +138,12 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
     importou = False
     if eh_dicom:
         tipos = (("Imagens DICOM","*.dcm"),("Todos os arquivos","*.*"))
-        nome_arquivo = "./G0C0Y2_teste.dcm"
+        #nome_arquivo = "./G0C0Y2_teste.dcm"
     else :
         tipos = (("Imagens TIFF","*.tif"),("Todos os arquivos","*.*"))
-        nome_arquivo = "./G0C0Y1.tif"
-    #nome_arquivo = filedialog.askopenfilename(initialdir='./', 
-    #                title="Selecione o arquivo", filetypes=tipos)
+        #nome_arquivo = "./G0C0Y1.tif"
+    nome_arquivo = filedialog.askopenfilename(initialdir='./', 
+                    title="Selecione o arquivo", filetypes=tipos)
     if nome_arquivo != "":
         if eh_dicom:
             try: #Abrir arquivo dicom
@@ -110,7 +188,7 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
             
         if importou: #cria a janela de importação com informações pertinentes
             toplevel_importar = Toplevel()
-            toplevel_importar.title('importar imagem')
+            toplevel_importar.title('Importar imagem')
             toplevel_importar.iconbitmap('Imagens/dirac_eqn.ico')
             
             arquivo_label = Label(toplevel_importar, text="Imagem: "+nome_arquivo, justify=LEFT)
@@ -175,26 +253,80 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
 
   
 def analisar_pf():
-    global label_resultado
+    global label_resultado, frame_imagem, frame_texto_analise, analisou
+    global btn_salvar, btn_imprimir, pf
 
-    pf = PicketFence(nome_dcm)
-    pf.analyze(mlc_model=mlc_selecionado.get(), tolerance=0.285, action_tolerance=0.284, orientation='u')
-    
-    label_resultado.grid_forget()
-    label_resultado = Label(root, text=pf.results())
-    label_resultado.grid(row=2,column=0)
 
-    fig_pf, ax_pf = pf.get_analyzed_image(guard_rails=False, mlc_peaks=True, overlay=True, leaf_error_subplot=True)
-    pf_img = FigureCanvasTkAgg(fig_pf, root)
-    pf_img.draw()
-    pf_img.get_tk_widget().grid(row=3,column=0,rowspan=5, columnspan=3)
+    try:
+        pf = PicketFence(nome_dcm)
+        pf.analyze(mlc_model=mlc_selecionado.get(), tolerance=tolerancia, action_tolerance=limite_acao, orientation=orientacao.get())
+        
+        if analisou:
+            frame_texto_analise.destroy()
+        frame_texto_analise = LabelFrame(root, text="Descrição do resultado", height=60, width=190)
+        frame_texto_analise.grid(row=3,column=4, padx=30, pady=20,sticky=W, rowspan=10)
+
+        label_resultado = Label(frame_texto_analise, text=pf.results(), justify=LEFT)
+        label_resultado.grid(row=0,column=0)
+
+        if analisou:
+            frame_imagem.destroy()
+        frame_imagem = LabelFrame(root, text="Resultado da Análise")
+        frame_imagem.grid(row=1,column=0,columnspan=4, rowspan=4)
+
+        fig_pf, ax_pf = pf.get_analyzed_image(guard_rails=lista_opcoes_exibicao[0].get(), mlc_peaks=lista_opcoes_exibicao[1].get(), 
+                                                overlay=lista_opcoes_exibicao[2].get(), leaf_error_subplot=lista_opcoes_exibicao[3].get())
+        fig_pf.set_size_inches(0.7*fig_pf.get_size_inches())
+        pf_img = FigureCanvasTkAgg(fig_pf, frame_imagem)
+        pf_img.draw()
+        pf_img.get_tk_widget().pack()
+        pf_img_toolbar = NavigationToolbar2Tk(pf_img, frame_imagem)
+        pf_img_toolbar.update()
+        analisou = True
+        btn_salvar.grid_forget()
+        btn_salvar = Button(frame_relatorio, text='Salvar', command=lambda: fnc_salvar_relatorio(False))
+        btn_salvar.grid(row=0,column=0, pady=3, padx=5)
+        btn_imprimir.grid_forget()
+        btn_imprimir = Button(frame_relatorio, text='Imprimir', command=lambda: fnc_salvar_relatorio(True))
+        btn_imprimir.grid(row=0,column=1, pady=3, padx=5)
+
+    except:
+        messagebox.showerror("Erro", "Não foi possível realizar a análise. Verifique os itens abaixo:\n- Imagem carregada.\n- Orientação do MLC.\n- Modelo do MLC.")
+ 
+
+def fnc_salvar_relatorio(Imprimir):
+    global dados_teste
+    #Atualiza dict dados_teste e notas
+
+    for item in lista_dados:
+        dados_teste[item[2]] = item[1].get()
+    dados_teste['Modelo do MLC'] = mlc_selecionado.get()
+    notas = texto_notas.get("0.0",END)
+    pf.publish_pdf(filename='Teste_salvar.pdf', notes=notas, open_file=Imprimir, metadata=dados_teste)
+
+
+
+
 
 ####### Inicialização da Janel Principal #######
 root = Tk()
 root.title('Análise Picket Fence')
 root.iconbitmap('Imagens/dirac_eqn.ico')
-root.geometry("1400x720")
+root.state('zoomed') # inicializa a janela principal maximizada
+#root.geometry("1400x720")
+
+tolerancia = 0.5 # tolerancia em mm
+limite_acao = 0.3 # limite de ação em mm
 nome_dcm = ""
+analisou = False
+
+lista_opcoes_exibicao = [] # Boolean: [guard-rails, mlc peaks, overlay, leaf error subplot]
+
+for i in range(0,4):
+    boolean_temp = BooleanVar()
+    boolean_temp.set(True)
+    lista_opcoes_exibicao.append(boolean_temp)
+
 ################################################
 
 ########### Criação da Barra de Menu ###########
@@ -203,19 +335,19 @@ menubar = Menu(root)
 menu_arquivo = Menu(menubar, tearoff=0)
 menu_arquivo.add_command(label="Importar imagem TIFF", command=lambda: janela_importar_img(False))
 menu_arquivo.add_command(label="Importar imagem DICOM", command=lambda: janela_importar_img(True))
-menu_arquivo.add_command(label="Excluir imagem selecionada", command=teste)
-menu_arquivo.add_command(label="Excluir todas as imagens", command=teste)
+#menu_arquivo.add_command(label="Excluir imagem selecionada", command=teste)
+#menu_arquivo.add_command(label="Excluir todas as imagens", command=teste)
 menu_arquivo.add_separator()
-menu_arquivo.add_command(label="Salvar resultados", command=root.quit)
-menu_arquivo.add_command(label="Imprimir relatório", command=root.quit)
+menu_arquivo.add_command(label="Salvar resultados", command=lambda: fnc_salvar_relatorio(False))
+menu_arquivo.add_command(label="Imprimir relatório", command=lambda: fnc_salvar_relatorio(True))
 menu_arquivo.add_separator()
 menu_arquivo.add_command(label="Sair", command=root.quit)
 menubar.add_cascade(label="Arquivo", menu=menu_arquivo)
 
 menu_opcoes = Menu(menubar, tearoff=0)
-menu_opcoes.add_command(label="Editar informações da imagem", command=teste)
-menu_opcoes.add_command(label="Critérios de análise", command=teste)
-menu_opcoes.add_command(label="Opções de exibição dos resultados", command=teste)
+#menu_opcoes.add_command(label="Editar informações da imagem", command=teste)
+menu_opcoes.add_command(label="Critérios de análise", command=criterios)
+menu_opcoes.add_command(label="Opções de exibição dos resultados", command=opcoes_exibicao)
 menubar.add_cascade(label="Opções", menu=menu_opcoes)
 
 menu_ajuda = Menu(menubar, tearoff=0)
@@ -229,22 +361,110 @@ root.config(menu=menubar)
 
 ###### Criação dos widgets da tela inicial######
 
+#Frames
+frame_importar = LabelFrame(root, text="Importar Imagem", height=60, width=200)
+frame_mlc_model = LabelFrame(root, text="Modelo do MLC", height=60, width=160)
+frame_orientacao = LabelFrame(root, text="Orientação MLC", height=60, width=100)
+frame_analise = LabelFrame(root, text="Análise", height=60, width=190)
+frame_notas = LabelFrame(root, text="Notas", height=150, width=600)
+frame_dados = LabelFrame(root, text="Informações do teste", height=205, width=600)
+frame_relatorio = LabelFrame(root, text="Relatório", height=60, width=125)
+
+#frame_texto_analise = LabelFrame(root, height=60, width=190)
+#frame_imagem = LabelFrame(root)
+
+#ScrolledText
+texto_notas = scrolledtext.ScrolledText(frame_notas, height=7, width=70)
+texto_notas.grid(row=0,column=0, padx=6)
+
+#Labels and Entry
+dados_teste = {'Unidade': '',
+             'Acelerador Linear': '',
+             'Modelo do MLC': '',
+             'Data do teste': '',
+             'Realizado por': '',
+             'Conferido por': ''}
+lista_dados = []
+for dado in dados_teste:
+    if dado != 'Modelo do MLC':
+        lista_dados.append([Label(frame_dados, text=dado + ': '), Entry(frame_dados,width=73, borderwidth=5), dado])
+#label_resultado = Label(frame_imagem, text="")
+
+
+#Drop list
 lista_mlc = ['Millennium MLC', 'Millennium HDMLC', 'Agility', 'MLCi2', 'Beam Modulator']
 mlc_selecionado = StringVar()
 mlc_selecionado.set(lista_mlc[3])
-drop_modelo_mlc = OptionMenu(root, mlc_selecionado, *lista_mlc) #lista de seleçao do mlc
-btn_analisar = Button(root, text='Analisar', command=analisar_pf)
-label_resultado = Label(root, text="")
+drop_modelo_mlc = OptionMenu(frame_mlc_model, mlc_selecionado, *lista_mlc) #lista de seleçao do mlc
+drop_modelo_mlc.config(width = 18)
+
+lista_orientacao = ['up-down','left-right']
+orientacao = StringVar()
+orientacao.set(lista_orientacao[0])
+drop_orientacao_mlc = OptionMenu(frame_orientacao, orientacao, *lista_orientacao) #lista de seleçao do mlc
+drop_orientacao_mlc.config(width = 8)
+
+#Buttons
+btn_import_dcm = Button(frame_importar, text='Arquivo DICOM', command=lambda: janela_importar_img(True))
+btn_import_tif = Button(frame_importar, text='Arquivo TIFF', command=lambda: janela_importar_img(False))
+btn_criterios = Button(frame_analise, text='Critérios de Análise', command=criterios)
+btn_analisar = Button(frame_analise, text='Analisar', command=analisar_pf, state=DISABLED)
+btn_salvar = Button(frame_relatorio, text='Salvar', command=lambda: fnc_salvar_relatorio(False), state=DISABLED)
+btn_imprimir = Button(frame_relatorio, text='Imprimir', command=lambda: fnc_salvar_relatorio(True), state=DISABLED)
 
 ##### Exibição dos widgets da tela inicial ######
 
+#Frames
+frame_importar.grid(row=0,column=0, padx=30, pady=20)
+frame_importar.grid_propagate(False)
+frame_mlc_model.grid(row=0,column=1, padx=30, pady=20)
+frame_mlc_model.grid_propagate(False)
+frame_orientacao.grid(row=0,column=2, padx=30, pady=20)
+frame_orientacao.grid_propagate(False)
+frame_analise.grid(row=0, column=3, padx=30, pady=20)
+frame_analise.grid_propagate(False)
+frame_relatorio.grid(row=0, column=4, padx=30, pady=20, sticky=W)
+frame_relatorio.grid_propagate(False)
+frame_notas.grid(row=1, column=4, padx=30, pady=20, sticky=W+E)
+frame_notas.grid_propagate(False)
+frame_dados.grid(row=2, column=4, padx=30, pady=20, sticky=W+E)
+frame_dados.grid_propagate(False)
 
-drop_modelo_mlc.grid(row=0,column=0)
-btn_analisar.grid(row=1,column=0)
-label_resultado.grid(row=2,column=0)
+
+
+#frame_texto_analise.grid(row=0, column=4)
+#frame_imagem.grid(row=1,column=0,columnspan=4)
+
+#ScrolledText
+texto_notas.grid(row=0,column=0, padx=6)
+
+#Labels and Entry
+lin = 0
+for label_dado in lista_dados:
+    label_dado[0].grid(row=lin,column=0, padx=5, pady=5, sticky=W)
+    label_dado[1].grid(row=lin,column=1, padx=5, pady=5)
+    lin += 1
+
+#label_resultado.grid(row=0, column=0)
+
+#Drop list
+drop_modelo_mlc.grid(row=0,column=0, padx=2)
+drop_orientacao_mlc.grid(row=0,column=0, padx=2)
+
+
+#Buttons
+btn_import_dcm.grid(row=0, column=0, pady=3, padx=5)
+btn_import_tif.grid(row=0, column=1, pady=3, padx=5)
+btn_criterios.grid(row=0, column=0, pady=3, padx=5)
+btn_analisar.grid(row=0,column=1, pady=3, padx=5)
+btn_salvar.grid(row=0,column=2, pady=3, padx=5)
+btn_imprimir.grid(row=0,column=3, pady=3, padx=5)
 
 ################################################
 
+
+
+root.protocol("WM_DELETE_WINDOW", on_closing) # Confirma se o usuário deseja fechar a janela
 
 root.mainloop()
 

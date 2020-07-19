@@ -3,15 +3,51 @@ import ConvertToDicom
 import matplotlib.pyplot as plt
 import pydicom
 import numpy as np
+from tkinter import *
+from tkinter import scrolledtext
 
-x = "EPID-PF-LR.dcm"
-ds = pydicom.filereader.read_file("G0C0Y2_teste.dcm")
-try:
-	print("gantry",ds[0x3002,0x000D])
-	print(ds[0x3002,0x000D].value)
-except:
-	print(0)
+
+dados = ['Autor','Função','Unidade','Acelerador Linear', 'Modelo MLC']
+temp={'Autor': '',
+             'Função': '',
+             'Unidade': '',
+             'Acelerador Linear': '',
+             'Modelo MLC': ''}
+i=0
+print(temp)
+for x in temp:
+	print(x)
+	print(type(x))
+	temp[x] = 'teste' + str(i)
+	i += 1
+print('-------------')
+print(temp)
+
+
 '''
+root = Tk()
+
+root.title('Exibir algunmas imagens')
+root.state('zoomed') # inicializa a janela principal maximizada
+#root.geometry("200x200")
+
+
+def mostrar():
+	Label(root, text=texto.get("0.0",END)).grid(row=1,column=0)
+
+
+
+
+
+
+texto = scrolledtext.ScrolledText(root, height=5, width=50)
+texto.grid(row=0,column=0)
+
+Button(root, text='Mostrar', command=mostrar).grid(row=0,column=1)
+
+
+root.mainloop()
+
 
 Dataset.file_meta -------------------------------
 (0002, 0000) File Meta Information Group Length  UL: 206
