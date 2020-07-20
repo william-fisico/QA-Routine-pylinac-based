@@ -441,12 +441,14 @@ class PicketFence:
                  f"Passed\nMedian Error: {self.abs_median_error:2.3f} mm \n" \
                  f"Mean picket spacing: {self.pickets.mean_spacing:2.1f} mm \n" \
                  f"Picket offsets from CAX (mm): {offsets}\n" \
-                 f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket}, Leaf: {self.settings.leafs_idx_in_image[self.max_error_leaf]}"
+                 f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket + 1}, Leaf: {self.pickets.pickets[self.max_error_picket].leafs_idx_in_picket[self.max_error_leaf]}"
         return string
 
     def get_test_pickets(self):
-        #Retorna lista com todos os pickets e o número das lâminas presentes na imagem
-        return(self.pickets.pickets,self.settings.leafs_idx_in_image)
+        #Retorna lista com todos os pickets
+        #erros no picket ==> self.picketts.pickets.error_array
+        #indice da lamina no picket ==> self.picketts.pickets.leafs_idx_in_picket
+        return(self.pickets.pickets)
 
     def publish_pdf(self, filename: str, notes: str=None, open_file: bool=False, metadata: dict=None):
         """Publish (print) a PDF containing the analysis, images, and quantitative results.
@@ -480,7 +482,7 @@ class PicketFence:
             f'Leaves passing (%): {self.percent_passing:2.1f}',
             f'Absolute median error (mm): {self.abs_median_error:2.3f}',
             f'Mean picket spacing (mm): {self.pickets.mean_spacing:2.1f}',
-            f'Maximum error (mm): {self.max_error:2.3f} on Picket {self.max_error_picket}, Leaf {self.settings.leafs_idx_in_image[self.max_error_leaf]}',
+            f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket + 1}, Leaf: {self.pickets.pickets[self.max_error_picket].leafs_idx_in_picket[self.max_error_leaf]}"
         ]
         text.append(f'Gantry Angle: {self.image.gantry_angle:2.2f}')
         text.append(f'Collimator Angle: {self.image.collimator_angle:2.2f}')
@@ -705,7 +707,11 @@ class Settings:
         values_in_image = (leaf_centers > 0 + self.large_leaf_width / 2) & (
         leaf_centers < edge - self.large_leaf_width / 2)
         leaf_centers_in_image = leaf_centers[values_in_image]
-        self.leafs_idx_in_image = leafs_idx[values_in_image]
+        leafs_idx_in_image = leafs_idx[values_in_image]
+        self.leafs_idx_in_image = {}
+        for x,y in enumerate(np.round(leaf_centers_in_image).astype(int)):
+            #print(x,y)
+            self.leafs_idx_in_image[y] = leafs_idx_in_image[x]
         return np.round(leaf_centers_in_image).astype(int)
 
 
@@ -791,6 +797,7 @@ class Picket:
         self.settings = settings
         self.approximate_idx = approximate_idx
         self.spacing = spacing
+        self.leafs_idx_in_picket = []
         self._get_mlc_positions()
 
     def _get_mlc_positions(self):
@@ -802,6 +809,9 @@ class Picket:
             # add MLC measurement object
             if mlc_position is not None:
                 self.add_mlc_meas(mlc_center, mlc_position)
+                # add MLC index in picket
+                self.leafs_idx_in_picket.append(self.settings.leafs_idx_in_image[mlc_center])
+
         # now add the picket fit to the measurement so it can calculate error, etc.
         for idx, meas in enumerate(self.mlc_meas):
             meas.fit = self.fit

@@ -17,6 +17,7 @@ from PIL.TiffTags import TAGS
 import ConvertToDicom
 from pylinac_dev import PicketFence
 from tkinter import scrolledtext
+import subprocess
 
 def teste():
     return
@@ -72,6 +73,7 @@ def opcoes_exibicao():
     global toplevel_opcoes_exibicao
 
     toplevel_opcoes_exibicao = Toplevel()
+    #toplevel_opcoes_exibicao.geometry("300x150")
     toplevel_opcoes_exibicao.title('Opções de exibição do resultado')
     toplevel_opcoes_exibicao.iconbitmap('Imagens/dirac_eqn.ico')
 
@@ -86,10 +88,10 @@ def opcoes_exibicao():
         else:
             lista_checkbox_opcoes[i].deselect()
 
-        lista_checkbox_opcoes[i].grid(row=i, column=0,padx=5, pady=5, sticky=W)
+        lista_checkbox_opcoes[i].grid(row=0, column=i,padx=5, pady=5, sticky=W)
 
     btn_fechar_opcoes = Button(toplevel_opcoes_exibicao, text="Fechar", command=toplevel_opcoes_exibicao.destroy)
-    btn_fechar_opcoes.grid(row=4,column=0, padx=5, pady=5, sticky=W+E)
+    btn_fechar_opcoes.grid(row=1,column=0, padx=5, pady=5, sticky=W+E, columnspan=4)
 
 def on_closing():
     if messagebox.askyesno("Sair", "Deseja fechar o programa?"):
@@ -114,17 +116,31 @@ def atualizar_parametros(lista_entry):
 def importar_dados(eh_dicom, filename):
     global gantry, colimador, sad, sid, x_res, translacao
     global toplevel_importar, nome_dcm, btn_analisar
+    global btn_salvar, btn_imprimir
 
     if eh_dicom:
         nome_dcm = filename
     else :
         caminho,nome = os.path.split(os.path.splitext(filename)[0])
-        nome_dcm = caminho + '/' + nome + '_pfDicom.dcm'
+        if os.path.isdir(caminho + '/PF_Dicom'):
+            nome_dcm = caminho + '/PF_Dicom/' + nome + '_pfDicom.dcm'
+        else:
+            try:
+                os.mkdir(caminho + '/PF_Dicom')
+                nome_dcm = caminho + '/PF_Dicom/' + nome + '_pfDicom.dcm'
+            except:
+                nome_dcm = caminho + '/' + nome + '_pfDicom.dcm'
         ConvertToDicom.convert(filename, nome_dcm, translacao, sad, sid, gantry, colimador, x_res)
     messagebox.showinfo("Arquivo importado", "Arquivo importado com sucesso.")
-    btn_analisar.grid_forget()
-    btn_analisar = Button(frame_analise, text='Analisar', command=analisar_pf)
-    btn_analisar.grid(row=0,column=1, pady=3, padx=5)
+    if analisou:
+        frame_texto_analise.destroy()
+        frame_imagem.destroy()
+    btn_salvar.config(state=DISABLED)
+    btn_imprimir.config(state=DISABLED)
+    btn_analisar.config(state=NORMAL)
+    menu_arquivo.entryconfig(2, state=NORMAL)
+    menu_arquivo.entryconfig(4, state=DISABLED)
+    menu_arquivo.entryconfig(5, state=DISABLED)
     toplevel_importar.destroy()
 
 
@@ -138,7 +154,7 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
     importou = False
     if eh_dicom:
         tipos = (("Imagens DICOM","*.dcm"),("Todos os arquivos","*.*"))
-        #nome_arquivo = "./G0C0Y2_teste.dcm"
+        #nome_arquivo = "./EPID-PF-LR.dcm"
     else :
         tipos = (("Imagens TIFF","*.tif"),("Todos os arquivos","*.*"))
         #nome_arquivo = "./G0C0Y1.tif"
@@ -283,28 +299,79 @@ def analisar_pf():
         pf_img_toolbar = NavigationToolbar2Tk(pf_img, frame_imagem)
         pf_img_toolbar.update()
         analisou = True
-        btn_salvar.grid_forget()
-        btn_salvar = Button(frame_relatorio, text='Salvar', command=lambda: fnc_salvar_relatorio(False))
-        btn_salvar.grid(row=0,column=0, pady=3, padx=5)
-        btn_imprimir.grid_forget()
-        btn_imprimir = Button(frame_relatorio, text='Imprimir', command=lambda: fnc_salvar_relatorio(True))
-        btn_imprimir.grid(row=0,column=1, pady=3, padx=5)
+        btn_salvar.config(state=NORMAL)
+        btn_imprimir.config(state=NORMAL)
+        menu_arquivo.entryconfig(2, state=NORMAL)
+        menu_arquivo.entryconfig(4, state=NORMAL)
+        menu_arquivo.entryconfig(5, state=NORMAL)
 
     except:
         messagebox.showerror("Erro", "Não foi possível realizar a análise. Verifique os itens abaixo:\n- Imagem carregada.\n- Orientação do MLC.\n- Modelo do MLC.")
  
 
-def fnc_salvar_relatorio(Imprimir):
-    global dados_teste
+def fnc_salvar_relatorio(imprimir):
+    global dados_teste, nome_pdf, salvou
     #Atualiza dict dados_teste e notas
 
     for item in lista_dados:
         dados_teste[item[2]] = item[1].get()
     dados_teste['Modelo do MLC'] = mlc_selecionado.get()
     notas = texto_notas.get("0.0",END)
-    pf.publish_pdf(filename='Teste_salvar.pdf', notes=notas, open_file=Imprimir, metadata=dados_teste)
+    tipo_pdf = (("Arquivos PDF","*.pdf"),("Todos os arquivos","*.*"))
+    if imprimir & salvou:
+        subprocess.Popen(nome_pdf,shell=True)
+    else:
+        nome_arquivo_pdf = filedialog.asksaveasfile(initialdir='./', 
+                        title="Salvar arquivo", filetypes=tipo_pdf)
+        nome_arquivo_pdf.close()
+        os.remove(nome_arquivo_pdf.name)
+        caminho,nome = os.path.split(os.path.splitext(nome_arquivo_pdf.name)[0])
+        nome_pdf = caminho + '/' + nome + '.pdf'
+        nome_txt = caminho + '/' + nome + '.txt'
+        pf.publish_pdf(filename=nome_pdf, notes=notas, open_file=False, metadata=dados_teste)
+        if imprimir:
+            subprocess.Popen(nome_pdf,shell=True)
 
+        pickets = pf.get_test_pickets()
+        erros = np.zeros([pickets[0].error_array.shape[0],len(pickets)+1])
+        text_file = open(nome_txt, "w")
+        for lin in range(0,erros.shape[0]):
+            texto_lin = ''
+            for col in range(0,erros.shape[1]):
+                if col==0:
+                    if lin==0:
+                        texto_header = 'Leaf'
+                    erros[lin,col] = pickets[col].leafs_idx_in_picket[lin]
+                    texto_lin = texto_lin + f'{erros[lin,col]:2.0f}'
+                else:
+                    if lin==0:
+                        texto_header = texto_header + f'\tPicket {col}'
+                    erros[lin,col] = pickets[col-1].error_array[lin]
+                    texto_lin = texto_lin + '\t' + f'{erros[lin,col]:2.3f}'
+            if lin==0:
+                text_file.write(texto_header + '\n')
+            text_file.write(texto_lin + '\n')
+        text_file.close()
+        salvou = True
 
+def fnc_limpar():
+    global nome_dcm, btn_analisar, btn_salvar, btn_imprimir
+    global analisou, salvou
+
+    if analisou:
+        frame_texto_analise.destroy()
+        frame_imagem.destroy()
+    btn_salvar.config(state=DISABLED)
+    btn_imprimir.config(state=DISABLED)
+    btn_analisar.config(state=DISABLED)
+    menu_arquivo.entryconfig(2, state=DISABLED)
+    menu_arquivo.entryconfig(4, state=DISABLED)
+    menu_arquivo.entryconfig(5, state=DISABLED)
+    nome_dcm = ""
+    analisou = False
+    salvou = False
+
+    
 
 
 
@@ -319,6 +386,7 @@ tolerancia = 0.5 # tolerancia em mm
 limite_acao = 0.3 # limite de ação em mm
 nome_dcm = ""
 analisou = False
+salvou = False
 
 lista_opcoes_exibicao = [] # Boolean: [guard-rails, mlc peaks, overlay, leaf error subplot]
 
@@ -335,11 +403,10 @@ menubar = Menu(root)
 menu_arquivo = Menu(menubar, tearoff=0)
 menu_arquivo.add_command(label="Importar imagem TIFF", command=lambda: janela_importar_img(False))
 menu_arquivo.add_command(label="Importar imagem DICOM", command=lambda: janela_importar_img(True))
-#menu_arquivo.add_command(label="Excluir imagem selecionada", command=teste)
-#menu_arquivo.add_command(label="Excluir todas as imagens", command=teste)
+menu_arquivo.add_command(label="Limpar análise", command=fnc_limpar, state=DISABLED)
 menu_arquivo.add_separator()
-menu_arquivo.add_command(label="Salvar resultados", command=lambda: fnc_salvar_relatorio(False))
-menu_arquivo.add_command(label="Imprimir relatório", command=lambda: fnc_salvar_relatorio(True))
+menu_arquivo.add_command(label="Salvar resultados", command=lambda: fnc_salvar_relatorio(False), state=DISABLED)
+menu_arquivo.add_command(label="Imprimir relatório", command=lambda: fnc_salvar_relatorio(True), state=DISABLED)
 menu_arquivo.add_separator()
 menu_arquivo.add_command(label="Sair", command=root.quit)
 menubar.add_cascade(label="Arquivo", menu=menu_arquivo)
@@ -351,9 +418,9 @@ menu_opcoes.add_command(label="Opções de exibição dos resultados", command=o
 menubar.add_cascade(label="Opções", menu=menu_opcoes)
 
 menu_ajuda = Menu(menubar, tearoff=0)
-menu_ajuda.add_command(label="Ajuda", command=teste)
+menu_ajuda.add_command(label="Ajuda", command=teste, state=DISABLED)
 menu_ajuda.add_separator()
-menu_ajuda.add_command(label="Sobre", command=teste)
+menu_ajuda.add_command(label="Sobre", command=teste, state=DISABLED)
 menubar.add_cascade(label="Ajuda", menu=menu_ajuda)
 
 root.config(menu=menubar)
@@ -388,7 +455,7 @@ lista_dados = []
 for dado in dados_teste:
     if dado != 'Modelo do MLC':
         lista_dados.append([Label(frame_dados, text=dado + ': '), Entry(frame_dados,width=73, borderwidth=5), dado])
-#label_resultado = Label(frame_imagem, text="")
+
 
 
 #Drop list
