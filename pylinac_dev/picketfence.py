@@ -30,6 +30,8 @@ import io
 from itertools import cycle
 from tempfile import TemporaryDirectory
 from typing import Union, Tuple, List
+from reportlab.lib.utils import ImageReader
+from PIL import Image
 
 import argue
 import matplotlib.pyplot as plt
@@ -450,7 +452,7 @@ class PicketFence:
         #indice da lamina no picket ==> self.picketts.pickets.leafs_idx_in_picket
         return(self.pickets.pickets)
 
-    def publish_pdf(self, filename: str, notes: str=None, open_file: bool=False, metadata: dict=None):
+    def publish_pdf(self, filename: str, notes: str=None, open_file: bool=False, metadata: dict=None, customized: bool=False):
         """Publish (print) a PDF containing the analysis, images, and quantitative results.
 
         Parameters
@@ -470,8 +472,15 @@ class PicketFence:
             Unit: TrueBeam
             --------------
         """
+
         plt.ioff()
-        canvas = pdf.PylinacCanvas(filename, page_title="Picket Fence Analysis", metadata=metadata)
+        #Relatorio customizado
+        if customized:
+            im=Image.open('./Imagens/logo.png')
+            image_reader = ImageReader(im)
+            canvas = pdf.PylinacCanvas(filename, page_title="Picket Fence Analysis", metadata=metadata, customized=customized, image_reader=image_reader)
+        else:
+            canvas = pdf.PylinacCanvas(filename, page_title="Picket Fence Analysis", metadata=metadata)
         data = io.BytesIO()
         self.save_analyzed_image(data, leaf_error_subplot=True)
         canvas.add_image(data, location=(3, 8), dimensions=(12, 12))

@@ -48,7 +48,7 @@ def criterios():
 
     toplevel_criterios = Toplevel()
     toplevel_criterios.title('Critérios de análise')
-    toplevel_criterios.iconbitmap('Imagens/dirac_eqn.ico')
+    toplevel_criterios.iconbitmap('./Imagens/dirac_eqn.ico')
 
     tolerancia_label = Label(toplevel_criterios,text="Tolerância (mm):", justify=LEFT)
     limite_acao_label = Label(toplevel_criterios,text="Limite de ação (mm):", justify=LEFT)
@@ -75,7 +75,7 @@ def opcoes_exibicao():
     toplevel_opcoes_exibicao = Toplevel()
     #toplevel_opcoes_exibicao.geometry("300x150")
     toplevel_opcoes_exibicao.title('Opções de exibição do resultado')
-    toplevel_opcoes_exibicao.iconbitmap('Imagens/dirac_eqn.ico')
+    toplevel_opcoes_exibicao.iconbitmap('./Imagens/dirac_eqn.ico')
 
     lista_label_opcoes = ['Guard rails', 'MLC mlc_peaks', 'Overlay', 'Leaf error subplot']
     lista_checkbox_opcoes = []
@@ -118,10 +118,15 @@ def importar_dados(eh_dicom, filename):
     global toplevel_importar, nome_dcm, btn_analisar
     global btn_salvar, btn_imprimir
 
+    if analisou:
+        fnc_limpar()
+
     if eh_dicom:
         nome_dcm = filename
     else :
         caminho,nome = os.path.split(os.path.splitext(filename)[0])
+        nome_teste = 'Picket Fence'
+        id_teste = 'Picket Fence'
         if os.path.isdir(caminho + '/PF_Dicom'):
             nome_dcm = caminho + '/PF_Dicom/' + nome + '_pfDicom.dcm'
         else:
@@ -130,11 +135,8 @@ def importar_dados(eh_dicom, filename):
                 nome_dcm = caminho + '/PF_Dicom/' + nome + '_pfDicom.dcm'
             except:
                 nome_dcm = caminho + '/' + nome + '_pfDicom.dcm'
-        ConvertToDicom.convert(filename, nome_dcm, translacao, sad, sid, gantry, colimador, x_res)
+        ConvertToDicom.convert(nome_teste, id_teste, filename, nome_dcm, translacao, sad, sid, gantry, colimador, x_res)
     messagebox.showinfo("Arquivo importado", "Arquivo importado com sucesso.")
-    if analisou:
-        frame_texto_analise.destroy()
-        frame_imagem.destroy()
     btn_salvar.config(state=DISABLED)
     btn_imprimir.config(state=DISABLED)
     btn_analisar.config(state=NORMAL)
@@ -205,7 +207,7 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
         if importou: #cria a janela de importação com informações pertinentes
             toplevel_importar = Toplevel()
             toplevel_importar.title('Importar imagem')
-            toplevel_importar.iconbitmap('Imagens/dirac_eqn.ico')
+            toplevel_importar.iconbitmap('./Imagens/dirac_eqn.ico')
             
             arquivo_label = Label(toplevel_importar, text="Imagem: "+nome_arquivo, justify=LEFT)
             gantry_label = Label(toplevel_importar,text="Gantry:", justify=LEFT)
@@ -328,7 +330,7 @@ def fnc_salvar_relatorio(imprimir):
         caminho,nome = os.path.split(os.path.splitext(nome_arquivo_pdf.name)[0])
         nome_pdf = caminho + '/' + nome + '.pdf'
         nome_txt = caminho + '/' + nome + '.txt'
-        pf.publish_pdf(filename=nome_pdf, notes=notas, open_file=False, metadata=dados_teste)
+        pf.publish_pdf(filename=nome_pdf, notes=notas, open_file=False, metadata=dados_teste, customized=True)
         if imprimir:
             subprocess.Popen(nome_pdf,shell=True)
 
@@ -378,7 +380,7 @@ def fnc_limpar():
 ####### Inicialização da Janel Principal #######
 root = Tk()
 root.title('Análise Picket Fence')
-root.iconbitmap('Imagens/dirac_eqn.ico')
+root.iconbitmap('./Imagens/dirac_eqn.ico')
 root.state('zoomed') # inicializa a janela principal maximizada
 #root.geometry("1400x720")
 

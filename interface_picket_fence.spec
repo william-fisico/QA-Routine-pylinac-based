@@ -4,11 +4,11 @@ block_cipher = None
 
 
 a = Analysis(['interface_picket_fence.py'],
-             pathex=['W:\\GitHub Projects\\QA-Routine-pylinac-based'],
+             pathex=['C:\\Users\\willi\\AppData\\Local\\Programs\\Python\\Python38-32\\Lib\\site-packages\\skimage\\feature', 'W:\\GitHub Projects\\QA-Routine-pylinac-based'],
              binaries=[],
              datas=[],
              hiddenimports=[],
-             hookspath=[],
+             hookspath=['.'],
              runtime_hooks=[],
              excludes=[],
              win_no_prefer_redirects=False,

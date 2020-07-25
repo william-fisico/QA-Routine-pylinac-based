@@ -20,29 +20,34 @@ import tempfile
 import datetime
 import pydicom
 from pydicom.dataset import Dataset, FileDataset, FileMetaDataset
+from pydicom.uid import generate_uid
 from PIL import Image
 from PIL.TiffTags import TAGS
 import numpy as np
 import matplotlib.pyplot as plt
 
-def convert(nome_tiff, nome_dicom, translacao, sad, sid, gantry, colimador, x_res):
+def convert(nome_paciente, id_paciente, nome_tiff, nome_dicom, translacao, sad, sid, gantry, colimador, x_res):
 	global ds
 	# Nome do arquivo
 	filename_little_endian = nome_dicom
+
+	#https://pydicom.github.io/pynetdicom/dev/user/concepts.html
+	#https://pydicom.github.io/pydicom/dev/reference/generated/pydicom.uid.generate_uid.html
+	#https://www.medicalconnections.co.uk/FreeUID/
+	instance_uid = generate_uid(prefix='1.2.826.0.1.3680043.10.565.')
 
 	# Criando arquivos com informações minimas
 	#print('Criando arquivo Dicom Image')
 	file_meta = FileMetaDataset()
 	file_meta.MediaStorageSOPClassUID = '1.2.840.10008.5.1.4.1.1.481.1' #http://dicom.nema.org/dicom/2013/output/chtml/part04/sect_I.4.html
-	file_meta.MediaStorageSOPInstanceUID = "1.2.246.352.81.3.273720375.51644.19651.179.0"
-	file_meta.ImplementationClassUID = "1.2.246.352.70.2.1.160.3"
+	file_meta.MediaStorageSOPInstanceUID = instance_uid
 
 	#Criando um dataset "vazio" ==> https://pydicom.github.io/pydicom/dev/reference/generated/pydicom.dataset.FileDataset.html
 	ds = FileDataset(filename_little_endian, {}, file_meta = file_meta, preamble = b"\0"*128)
 
 	#Adicionando elementos
-	ds.PatientName = "Teste"
-	ds.PatientID = "123456789"
+	ds.PatientName = nome_dicom
+	ds.PatientID = id_paciente
 
 	#Transfer Syntax
 	ds.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
@@ -70,7 +75,7 @@ def convert(nome_tiff, nome_dicom, translacao, sad, sid, gantry, colimador, x_re
 	translacao = [translacao[0]*dpmm,translacao[1]*dpmm] # deslocamento em pixel no painel
 	
 	ds.add_new([0x0008,0x0016], 'UI','1.2.840.10008.5.1.4.1.1.481.1') #SOP Class UID
-	ds.add_new([0x0008,0x0018], 'UI','1.2.246.352.81.3.273720375.51644.19651.179.0') #SOP Instance UID
+	ds.add_new([0x0008,0x0018], 'UI',instance_uid) #SOP Instance UID
 	ds.add_new([0x0028,0x0010], 'US',tiff_meta_dict['ImageLength'][0]) #rows
 	ds.add_new([0x0028,0x0011], 'US',tiff_meta_dict['ImageWidth'][0]) #columns
 	ds.add_new([0x0028,0x0100], 'US',tiff_meta_dict['BitsPerSample'][0]) #Bits Alocated
@@ -79,8 +84,9 @@ def convert(nome_tiff, nome_dicom, translacao, sad, sid, gantry, colimador, x_re
 	ds.add_new([0x0028,0x0004], 'CS', 'MONOCHROME2') # Photometric Interpretation ==> https://dicom.innolitics.com/ciods/enhanced-mr-image/enhanced-mr-image/00280103
 	ds.add_new([0x0008,0x0060], 'CS', 'RTIMAGE') #Modality
 	ds.add_new([0x0028,0x0101], 'US',tiff_meta_dict['BitsPerSample'][0]) #Bits Stored
-	ds.add_new([0x3002,0x0022], 'DS', 1000.0) # Radiation Machine SAD
-	ds.add_new([0x3002,0x0026], 'DS', 1600.0) # RT Image SID
+	ds.add_new([0x0028,0x0102], 'US',tiff_meta_dict['BitsPerSample'][0]-1) #High Bit ==> https://dicom.innolitics.com/ciods/us-image/image-pixel/00280102
+	ds.add_new([0x3002,0x0022], 'DS', sad) # Radiation Machine SAD
+	ds.add_new([0x3002,0x0026], 'DS', sid) # RT Image SID
 	ds.add_new([0x5000,0x0030], 'SH', ['PIXL', 'PIXL']) #Axis Units
 	ds.add_new([0x3002,0x0011], 'DS', [x_res,x_res]) #Image Plane Pixel Spacing
 	ds.add_new([0x3002,0x000D], 'DS', translacao) # X-Ray Image Receptor Translation Attribute ==> https://dicom.innolitics.com/ciods/rt-beams-delivery-instruction/rt-beams-delivery-instruction/00741020/00741030/3002000d
