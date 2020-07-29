@@ -643,7 +643,7 @@ class Settings:
         elif self.mlc_model == 'Millennium HDMLC':
             n_leaves = 32
         elif self.mlc_model == 'Agility':
-            n_leaves = 20
+            n_leaves = 40
         elif self.mlc_model == 'MLCi2':
             n_leaves = 20
         elif self.mlc_model == 'Beam Modulator':
@@ -660,7 +660,7 @@ class Settings:
         elif self.mlc_model == 'Millennium HDMLC':
             n_leaves = 28
         elif self.mlc_model == 'Agility':
-            n_leaves = 20
+            n_leaves = 40
         elif self.mlc_model == 'MLCi2':
             n_leaves = 20
         elif self.mlc_model == 'Beam Modulator':
@@ -698,6 +698,7 @@ class Settings:
 
         leafs_idx = np.arange(1,self.number_small_leaves+self.number_large_leaves+1) # cria array com o número das lâminas
         # para inverter a ordem das laminas np.flip(leafs_idx)
+        
         
         #### Fim Código alterado ####
 
