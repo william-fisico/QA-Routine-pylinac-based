@@ -2,6 +2,8 @@
 import io
 import os.path as osp
 from typing import Tuple, Union
+from reportlab.lib.utils import ImageReader
+from PIL import Image
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -267,7 +269,7 @@ class FlatSym:
             },
         }
 
-    def publish_pdf(self, filename: str, notes: Union[str, list]=None, open_file: bool=False, metadata: dict=None):
+    def publish_pdf(self, filename: str, notes: Union[str, list]=None, open_file: bool=False, metadata: dict=None, customized: bool=False):
         """Publish (print) a PDF containing the analysis, images, and quantitative results.
 
         Parameters
@@ -289,8 +291,14 @@ class FlatSym:
         """
         if not self._is_analyzed:
             raise NotAnalyzed("Image is not analyzed yet. Use analyze() first.")
-        canvas = pdf.PylinacCanvas(filename, page_title="Flatness & Symmetry Analysis",
-                                   metadata=metadata, metadata_location=(2, 5))
+        #Relatorio customizado
+        if customized:
+            im=Image.open('./Imagens/logo.png')
+            image_reader = ImageReader(im)
+            canvas = pdf.PylinacCanvas(filename, page_title="Flatness & Symmetry Analysis", metadata=metadata, customized=customized, image_reader=image_reader, metadata_location=(2, 5))
+        else:
+            canvas = pdf.PylinacCanvas(filename, page_title="Flatness & Symmetry Analysis",
+                                   metadata=metadata, metadata_location=(2, 5)) 
         # draw result text
         text = self.results(as_str=False)
         canvas.add_text(text=text, location=(2, 25.5), font_size=14)
@@ -391,7 +399,7 @@ class FlatSym:
         # plot symmetry array
         if not data['array'] == 0:
             twin_axis = axis.twinx()
-            twin_axis.plot(range(cax_idx, data['profile right']), data['array'][int(round(len(data['array'])/2)):])
+            #twin_axis.plot(range(cax_idx, data['profile right']), data['array'][int(round(len(data['array'])/2)):])
             twin_axis.set_ylabel("Symmetry (%)")
         _remove_ticklabels(axis)
         # plot profile mirror

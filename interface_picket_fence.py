@@ -5,6 +5,10 @@
 # 14 de julho de 2020                                 #
 #######################################################
 
+#gerar executável
+#pyinstaller --onefile --paths=C:\\Users\\willi\\AppData\\Local\\Programs\\Python\\Python38-32\\Lib\\site-packages\\skimage\\feature --icon=Imagens/dirac_eqn.ico --additional-hooks-dir=. interface_picket_fence.py
+
+
 from tkinter import *
 from PIL import ImageTk,Image
 from tkinter import filedialog,messagebox
@@ -335,7 +339,7 @@ def fnc_salvar_relatorio(imprimir):
             subprocess.Popen(nome_pdf,shell=True)
 
         pickets = pf.get_test_pickets()
-        erros = np.zeros([pickets[0].error_array.shape[0],len(pickets)+1])
+        erros = np.zeros([pickets[0].error_array_not_abs.shape[0],len(pickets)+1])
         text_file = open(nome_txt, "w")
         for lin in range(0,erros.shape[0]):
             texto_lin = ''
@@ -348,7 +352,7 @@ def fnc_salvar_relatorio(imprimir):
                 else:
                     if lin==0:
                         texto_header = texto_header + f'\tPicket {col}'
-                    erros[lin,col] = pickets[col-1].error_array[lin]
+                    erros[lin,col] = pickets[col-1].error_array_not_abs[lin]
                     texto_lin = texto_lin + '\t' + f'{erros[lin,col]:2.3f}'
             if lin==0:
                 text_file.write(texto_header + '\n')

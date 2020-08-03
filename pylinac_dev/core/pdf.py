@@ -21,15 +21,20 @@ class PylinacCanvas:
         self._title = page_title
         self._metadata = metadata
         self._metadata_location = metadata_location
-        if customized:
-            self._generate_pylinac_template_theme_customized(image_reader)
+        self.customized = customized
+        self.image_reader = image_reader
+        if self.customized:
+            self._generate_pylinac_template_theme_customized(self.image_reader)
         else:
             self._generate_pylinac_template_theme()
         self._add_metadata()
 
     def add_new_page(self):
         self.canvas.showPage()
-        self._generate_pylinac_template_theme()
+        if self.customized:
+            self._generate_pylinac_template_theme_customized(self.image_reader)
+        else:
+            self._generate_pylinac_template_theme()
         self._add_metadata()
 
     def _add_metadata(self):

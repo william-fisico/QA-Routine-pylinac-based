@@ -450,6 +450,7 @@ class PicketFence:
         #Retorna lista com todos os pickets
         #erros no picket ==> self.picketts.pickets.error_array
         #indice da lamina no picket ==> self.picketts.pickets.leafs_idx_in_picket
+        #Distancia do picket para o CAX ==> self.picketts.pickets.dist2cax
         return(self.pickets.pickets)
 
     def publish_pdf(self, filename: str, notes: str=None, open_file: bool=False, metadata: dict=None, customized: bool=False):
@@ -484,6 +485,7 @@ class PicketFence:
         data = io.BytesIO()
         self.save_analyzed_image(data, leaf_error_subplot=True)
         canvas.add_image(data, location=(3, 8), dimensions=(12, 12))
+        offsets = ' '.join('{:.1f}'.format(pk.dist2cax) for pk in self.pickets)
         text = [
             'Picket Fence results:',
             f'Magnification factor (SID/SAD): {self.image.metadata.RTImageSID/self.image.metadata.RadiationMachineSAD:2.2f}',
@@ -491,6 +493,7 @@ class PicketFence:
             f'Leaves passing (%): {self.percent_passing:2.1f}',
             f'Absolute median error (mm): {self.abs_median_error:2.3f}',
             f'Mean picket spacing (mm): {self.pickets.mean_spacing:2.1f}',
+            f'Picket offsets from CAX (mm): {offsets}\n',
             f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket + 1}, Leaf: {self.pickets.pickets[self.max_error_picket].leafs_idx_in_picket[self.max_error_leaf]}"
         ]
         text.append(f'Gantry Angle: {self.image.gantry_angle:2.2f}')
@@ -547,7 +550,8 @@ class Overlay:
 
     def add_to_axes(self, axes):
         """Add the overlay to the axes."""
-        rect_width = self.pickets[0].sample_width*2
+        #rect_width = self.pickets[0].sample_width*2
+        rect_width = self.pickets[0].sample_width*4
         for mlc_num, mlc in enumerate(sorted(self.pickets, key=lambda x: len(x.mlc_meas))[0].mlc_meas):
             # get pass/fail status of all measurements across pickets for that MLC
             if self.settings.action_tolerance is not None:
@@ -852,7 +856,7 @@ class Picket:
     @property
     def sample_width(self) -> float:
         """The width to sample the MLC leaf (~80% of the leaf width).""" #alterado de 40% para 80%
-        return np.round(np.median(np.diff(self.settings.leaf_centers) * 4 / 5) / 2).astype(int) # alterado de 2/5 para 4/5
+        return np.round(np.median(np.diff(self.settings.leaf_centers) * 2 / 5) / 2).astype(int) # alterado de 2/5 para 4/5
 
     @property
     @lru_cache()
@@ -893,6 +897,12 @@ class Picket:
     def error_array(self) -> np.ndarray:
         """An array containing the error values of all the measurements."""
         return np.array([meas.error for meas in self.mlc_meas])
+
+    @property
+    @lru_cache()
+    def error_array_not_abs(self) -> np.ndarray:
+        """An array containing the error values (not absolute) of all the measurements."""
+        return np.array([meas.error_not_abs for meas in self.mlc_meas])
 
     @property
     def passed(self) -> bool:
@@ -1009,6 +1019,17 @@ class MLCMeas(Line):
             picket_pos = self.fit(self.center.x)
             mlc_pos = self.center.y
         return abs(mlc_pos - picket_pos) * self.settings.mmpd
+
+    @property
+    def error_not_abs(self) -> float:
+        """The error (difference) of the MLC measurement and the picket fit (no absolute values)."""
+        if self.settings.orientation == UP_DOWN:
+            picket_pos = self.fit(self.center.y)
+            mlc_pos = self.center.x
+        else:
+            picket_pos = self.fit(self.center.x)
+            mlc_pos = self.center.y
+        return (mlc_pos - picket_pos) * self.settings.mmpd
 
     @property
     def passed(self) -> bool:
