@@ -493,7 +493,7 @@ class PicketFence:
             f'Leaves passing (%): {self.percent_passing:2.1f}',
             f'Absolute median error (mm): {self.abs_median_error:2.3f}',
             f'Mean picket spacing (mm): {self.pickets.mean_spacing:2.1f}',
-            f'Picket offsets from CAX (mm): {offsets}\n',
+            f'Picket offsets (mm): {offsets}',
             f"Max Error: {self.max_error:2.3f} mm on Picket: {self.max_error_picket + 1}, Leaf: {self.pickets.pickets[self.max_error_picket].leafs_idx_in_picket[self.max_error_leaf]}"
         ]
         text.append(f'Gantry Angle: {self.image.gantry_angle:2.2f}')

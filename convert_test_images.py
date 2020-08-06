@@ -37,7 +37,7 @@ for img in list_img_files:
              'Unidade': 'ICESP',
              'Acelerador Linear': 'AL02',
              'Modelo MLC': list_mlc_model[0]}
-    notes = ['Testando análise variação de MU e largura da faixa',
+    notes = ['Análise da variação de MU e largura da faixa',
              'Campo 20 cm X 20 cm',
              'Sem erros propositais',
              'Tolerância: ' + str(tolerance) + ' mm',

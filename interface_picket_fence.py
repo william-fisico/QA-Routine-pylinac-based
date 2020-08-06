@@ -160,7 +160,7 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
     importou = False
     if eh_dicom:
         tipos = (("Imagens DICOM","*.dcm"),("Todos os arquivos","*.*"))
-        #nome_arquivo = "./EPID-PF-LR.dcm"
+        #nome_arquivo = "./PF_Dicom/5mm-00Y1x20Y2-1MU_pfDicom.dcm"
     else :
         tipos = (("Imagens TIFF","*.tif"),("Todos os arquivos","*.*"))
         #nome_arquivo = "./G0C0Y1.tif"
@@ -323,6 +323,22 @@ def fnc_salvar_relatorio(imprimir):
         dados_teste[item[2]] = item[1].get()
     dados_teste['Modelo do MLC'] = mlc_selecionado.get()
     notas = texto_notas.get("0.0",END)
+    notas2 = []
+    nova_linha = ''
+    max_lin = 10
+    for linha in notas:
+        if len(notas2)<max_lin:
+            if linha=='\n':
+                notas2.append(nova_linha)
+                nova_linha = ''
+            else:
+                if (len(nova_linha)>90) & (linha==' '):
+                    notas2.append(nova_linha)
+                    nova_linha = ''
+                else:
+                    nova_linha += linha
+    notas2.append(nova_linha)
+    notas = notas2
     tipo_pdf = (("Arquivos PDF","*.pdf"),("Todos os arquivos","*.*"))
     if imprimir & salvou:
         subprocess.Popen(nome_pdf,shell=True)
@@ -339,6 +355,9 @@ def fnc_salvar_relatorio(imprimir):
             subprocess.Popen(nome_pdf,shell=True)
 
         pickets = pf.get_test_pickets()
+        offsets = 'Dist2CAX'
+        for pk in pickets:
+            offsets = offsets + '\t' + f'{pk.dist2cax:2.3f}'
         erros = np.zeros([pickets[0].error_array_not_abs.shape[0],len(pickets)+1])
         text_file = open(nome_txt, "w")
         for lin in range(0,erros.shape[0]):
@@ -355,6 +374,7 @@ def fnc_salvar_relatorio(imprimir):
                     erros[lin,col] = pickets[col-1].error_array_not_abs[lin]
                     texto_lin = texto_lin + '\t' + f'{erros[lin,col]:2.3f}'
             if lin==0:
+                text_file.write(offsets + '\n')
                 text_file.write(texto_header + '\n')
             text_file.write(texto_lin + '\n')
         text_file.close()
