@@ -7,7 +7,7 @@ import glob
 
 def criar_plot(arquivos, titulo, nome_pdf):
 
-    path_to_files = './Images_31JUL2020/PF_leaf_data/'
+    path_to_files = './MLCi2/Images_12AGO2020/PF_leaf_data/'
 
     list_files = glob.glob(path_to_files + arquivos)
     #n_lines_plot = int((len(list_files) + 1)/2)
@@ -76,7 +76,7 @@ def criar_plot(arquivos, titulo, nome_pdf):
 
 lista_strip = ['5mm', '6mm']
 for strip in lista_strip:
-    arquivos = strip + '*.txt'
+    arquivos = strip + '*MU.txt'
     titulo = 'Comparação MU com strip de ' + strip + ' - Distância para o CAX'
     nome_pdf = 'Comparacao_MU_strip_' + strip + '_dist2cax.pdf'
     criar_plot(arquivos, titulo, nome_pdf)

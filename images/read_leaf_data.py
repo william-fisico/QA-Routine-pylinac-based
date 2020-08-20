@@ -7,7 +7,7 @@ import glob
 
 def criar_histogramas(arquivos, titulo, nome_pdf):
 
-    path_to_files = './Images_31JUL2020/PF_leaf_data/'
+    path_to_files = './MLCi2/Images_12AGO2020/PF_leaf_data/'
 
     list_files = glob.glob(path_to_files + arquivos)
     n_lines_plot = int((len(list_files) + 1)/2)
@@ -65,10 +65,13 @@ def criar_histogramas(arquivos, titulo, nome_pdf):
 
 lista_strip = ['5mm', '6mm']
 for strip in lista_strip:
-    arquivos = strip + '*.txt'
+    arquivos = strip + '*MU_Erros.txt'
     titulo = 'Comparação MU com strip de' + strip
-    nome_pdf = 'Comparacao_MU_strip_' + strip + '.pdf'
-    criar_histogramas(arquivos, titulo, nome_pdf)
+    nome_pdf = 'Comparacao_MU_strip_' + strip + '_Erros.pdf'
+    try:
+        criar_histogramas(arquivos, titulo, nome_pdf)
+    except:
+        print('ok')
     #arquivos = 'Abs_values_' + strip + '*.txt'
     #titulo = titulo + ' - Valores absolutos'
     #nome_pdf = 'Comparacao_MU_strip_' + strip + '_Abs_values.pdf'

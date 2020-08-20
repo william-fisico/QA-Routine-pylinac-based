@@ -94,15 +94,7 @@ def convert(nome_paciente, id_paciente, nome_tiff, nome_dicom, translacao, sad, 
 	ds.add_new([0x300A,0x0120], 'DS', colimador)# Beam Limiting Device (Colimator) Angle
 	
 	ds.save_as(nome_dicom)
-	#print(nome_dicom)
 
-	#print('Pronto!')
-	#plt.imshow(ds.pixel_array)
-	#plt.show()
-	#print(ds)
-
-#def picketfence(nome_tiff, nome_dicom, translacao, sad, sid):
-#	convert(nome_tiff, nome_dicom, translacao, sad, sid)
 
 def get_dicom():
 	return ds
