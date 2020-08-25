@@ -102,16 +102,21 @@ def on_closing():
         root.quit()
 
 
-def atualizar_parametros(lista_entry):
+def atualizar_parametros(lista_entry, dpi):
     global gantry, colimador, sad, sid, x_res, translacao
-    global toplevel_importar
+    global toplevel_importar, x_res_entry
 
     try:
         gantry = float(lista_entry[0][0].get())
         colimador = float(lista_entry[1][0].get())
         sad = float(lista_entry[2][0].get())
         sid = float(lista_entry[3][0].get())
-        x_res = float(lista_entry[4][0].get())
+        x_res = (sid/sad)/(dpi/25.4)
+        x_res_str = f"{x_res:2.3f}"
+        x_res_entry.config(state=NORMAL)
+        x_res_entry.delete(0, END)
+        x_res_entry.insert(0, x_res_str)
+        x_res_entry.config(state=DISABLED)
         translacao = [float(lista_entry[5][0].get()),float(lista_entry[6][0].get())]
     except:
         messagebox.showerror("Erro", "Valores inválidos")
@@ -139,7 +144,7 @@ def importar_dados(eh_dicom, filename):
                 nome_dcm = caminho + '/PF_Dicom/' + nome + '_pfDicom.dcm'
             except:
                 nome_dcm = caminho + '/' + nome + '_pfDicom.dcm'
-        ConvertToDicom.convert(nome_teste, id_teste, filename, nome_dcm, translacao, sad, sid, gantry, colimador, x_res)
+        ConvertToDicom.convert(nome_teste, id_teste, filename, nome_dcm, translacao, sad, sid, gantry, colimador)
     messagebox.showinfo("Arquivo importado", "Arquivo importado com sucesso.")
     btn_salvar.config(state=DISABLED)
     btn_imprimir.config(state=DISABLED)
@@ -155,7 +160,7 @@ def importar_dados(eh_dicom, filename):
 
 def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
     global gantry, colimador, sad, sid, x_res, translacao
-    global toplevel_importar
+    global toplevel_importar, x_res_entry
 
     importou = False
     if eh_dicom:
@@ -198,11 +203,19 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
             try:#Abrir arquivo TIFF
                 tiff_file = Image.open(nome_arquivo)
                 image_array = np.array(tiff_file)
+                tiff_meta_dict = {TAGS[key] : tiff_file.tag[key] for key in tiff_file.tag.keys()}
                 gantry = 0.0
                 colimador = 0.0
                 sad = 1000.0
                 sid = 1600.0
-                x_res = 0.406
+                try:
+                    dpi = (tiff_meta_dict['YResolution'][0][0]/tiff_meta_dict['YResolution'][0][1])
+                    x_res = (sid/sad)/(dpi/25.4)
+                    x_res_str = f"{x_res:2.3f}"
+                except:
+                    dpi = 75
+                    x_res = (sid/sad)/(dpi/25.4)
+                    x_res_str = f"{x_res:2.3f}"
                 translacao = [0.0,0.0]
                 importou = True
             except:
@@ -218,7 +231,7 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
             colimador_label = Label(toplevel_importar,text="Colimador:", justify=LEFT)
             sad_label = Label(toplevel_importar,text="SAD (mm):", justify=LEFT)
             sid_label = Label(toplevel_importar,text="SID (mm):", justify=LEFT)
-            x_res_label = Label(toplevel_importar,text="Espaçamento entre pixels (mm): \n(Para Elekta Synergy usar 0.406 mm)", justify=CENTER)
+            x_res_label = Label(toplevel_importar,text="Espaçamento entre pixels (mm):", justify=CENTER)
             translacao_x_label = Label(toplevel_importar,text="translacao do painel em x (mm):", justify=LEFT)
             translacao_y_label = Label(toplevel_importar,text="translacao do painel em y (mm):", justify=LEFT)
 
@@ -234,20 +247,21 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
                             [colimador_entry, colimador],
                             [sad_entry, sad],
                             [sid_entry, sid],
-                            [x_res_entry, x_res],
+                            [x_res_entry, x_res_str],
                             [translacao_x_entry, translacao[0]],
                             [translacao_y_entry, translacao[1]]]
 
             lin = 0
-            for entry in lista_entry:
-                entry[0].grid(row=lin, column=5)
-                entry[0].insert(0, entry[1])
+            for entry_item in lista_entry:
+                entry_item[0].grid(row=lin, column=5)
+                entry_item[0].insert(0, entry_item[1])
                 lin += 1
+            x_res_entry.config(state=DISABLED)
 
             lin = 0
             lista_label = [gantry_label, colimador_label, sad_label, sid_label, x_res_label, translacao_x_label, translacao_y_label]
-            for label in lista_label:
-                label.grid(row=lin,column=4)
+            for label_item in lista_label:
+                label_item.grid(row=lin,column=4)
                 lin += 1
 
             fig = plt.Figure()
@@ -264,7 +278,7 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
                 status_atualizar = DISABLED
             else:
                 status_atualizar = NORMAL
-            Button(toplevel_importar, text='Atualizar parâmetros', command=lambda: atualizar_parametros(lista_entry), state=status_atualizar).grid(row=7, column=0)
+            Button(toplevel_importar, text='Atualizar parâmetros', command=lambda: atualizar_parametros(lista_entry, dpi), state=status_atualizar).grid(row=7, column=0)
             Button(toplevel_importar, text='Importar', command=lambda: importar_dados(eh_dicom,nome_arquivo)).grid(row=7, column=1)
             Button(toplevel_importar, text='Cancelar', command=toplevel_importar.destroy).grid(row=7, column=2)
 

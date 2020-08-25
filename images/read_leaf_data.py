@@ -65,9 +65,9 @@ def criar_histogramas(arquivos, titulo, nome_pdf):
 
 lista_strip = ['5mm', '6mm']
 for strip in lista_strip:
-    arquivos = strip + '*MU_Erros.txt'
+    arquivos = strip + '*MU.txt'
     titulo = 'Comparação MU com strip de' + strip
-    nome_pdf = 'Comparacao_MU_strip_' + strip + '_Erros.pdf'
+    nome_pdf = 'Comparacao_MU_strip_' + strip + '.pdf'
     try:
         criar_histogramas(arquivos, titulo, nome_pdf)
     except:
