@@ -26,7 +26,7 @@ from PIL.TiffTags import TAGS
 import numpy as np
 import matplotlib.pyplot as plt
 
-def convert(nome_paciente, id_paciente, nome_tiff, nome_dicom, translacao, sad, sid, gantry, colimador):
+def convert(nome_paciente, id_paciente, nome_tiff, nome_dicom, translacao, sad, sid, gantry, colimador, mesa=0.0):
     global ds
     # Nome do arquivo
     filename_little_endian = nome_dicom
@@ -96,6 +96,7 @@ def convert(nome_paciente, id_paciente, nome_tiff, nome_dicom, translacao, sad, 
     ds.add_new([0x3002,0x000D], 'DS', translacao) # X-Ray Image Receptor Translation Attribute ==> https://dicom.innolitics.com/ciods/rt-beams-delivery-instruction/rt-beams-delivery-instruction/00741020/00741030/3002000d
     ds.add_new([0x300A,0x011E], 'DS', gantry)# Gantry Angle
     ds.add_new([0x300A,0x0120], 'DS', colimador)# Beam Limiting Device (Colimator) Angle
+    ds.add_new([0x300A,0x0122], 'DS', mesa)# Patient Support Angle (mesa)
 
     ds.save_as(nome_dicom)
 

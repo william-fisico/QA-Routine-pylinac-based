@@ -38,6 +38,9 @@ from .core.mask import filled_area_ratio, bounding_box
 from .core import pdf
 from .core.utilities import is_close, open_path
 
+from PIL import Image
+from reportlab.lib.utils import ImageReader
+
 GANTRY = 'Gantry'
 COLLIMATOR = 'Collimator'
 COUCH = 'Couch'
@@ -538,7 +541,7 @@ class WinstonLutz:
             result = '\n'.join(result)
         return result
 
-    def publish_pdf(self, filename: str, notes: Union[str, List[str]]=None, open_file: bool=False, metadata: dict=None):
+    def publish_pdf(self, filename: str, notes: Union[str, List[str]]=None, open_file: bool=False, metadata: dict=None, customized: bool=False):
         """Publish (print) a PDF containing the analysis, images, and quantitative results.
 
         Parameters
@@ -560,7 +563,12 @@ class WinstonLutz:
         """
         plt.ioff()
         title = "Winston-Lutz Analysis"
-        canvas = pdf.PylinacCanvas(filename, page_title=title, metadata=metadata)
+        if customized:
+            im=Image.open('./Imagens/logo.png')
+            image_reader = ImageReader(im)
+            canvas = pdf.PylinacCanvas(filename, page_title=title, metadata=metadata, customized=customized, image_reader=image_reader)
+        else:
+            canvas = pdf.PylinacCanvas(filename, page_title=title, metadata=metadata)
         text = self.results(as_list=True)
         canvas.add_text(text=text, location=(7, 25.5))
         # draw summary image on 1st page
