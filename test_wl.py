@@ -46,13 +46,13 @@ def rename_wl(root):
 
 #lista_resultado = []
 lista_resultado = [['Data', 'Iso Gantry', 'Iso Colimador', 'Iso Gantry e Colimador', 'Iso Mesa',
-                   'G0C0T0', 'G90C0T0', 'G180C0T0', 'G0C270T0', 'G270C0T0', 'G0C90T0', 'G0C0T270', 'G0C0T90']]
-root = './WL'
+                   'G0C0T0', 'G90C0T0', 'G180C0T0', 'G0C270T0', 'G0C180T0', 'G270C0T0', 'G0C90T0', 'G0C0T270', 'G0C0T90']]
+root = './WL3'
 rename_wl(root)
 root_folders = glob.glob(root + '/*')
 #root_folders = ['./WL/WL_20200706']
 root_folders.sort()
-analisaveis = [str(k) for k in range(1,9)]
+analisaveis = [str(k) for k in range(1,10)]
 
 try:
     os.mkdir(root + '/Analises')
@@ -78,9 +78,6 @@ for folder in root_folders:
         translacao = [0.0, 0.0]
         sad = 1000.0
         sid = 1600.0
-        gantry = 0.0
-        colimador = 0.0
-        mesa = 0.0
         if len(list_img_files)>0:
             path_to_dcm_file = folder + '/WL_dcm'
 
@@ -99,6 +96,9 @@ for folder in root_folders:
             except:
                 print('ok')
         for img in list_img_files:
+            gantry = 0.0
+            colimador = 0.0
+            mesa = 0.0
             caminho,nome = os.path.split(os.path.splitext(img)[0])
             tiff_file = caminho + '/' + nome + '.tif'
             if nome[-1] == ' ':
@@ -134,7 +134,11 @@ for folder in root_folders:
             elif nome[i] == '2':
                 dcm_file = path_to_dcm_file + '/' + 'gantry90.dcm'
                 gantry = 90.0
-                colimador = 00.0
+                colimador = 0.0
+            elif nome[i] == '9':
+                dcm_file = path_to_dcm_file + '/' + 'coll180.dcm'
+                gantry = 0.0
+                colimador = 180.0
             else:
                 dcm_file = path_to_dcm_file + '/' + 'gantry0.dcm'
                 gantry = 0.0
@@ -154,7 +158,7 @@ for folder in root_folders:
             gantry_coll_iso_size = wl.gantry_coll_iso_size
             couch_iso_size = wl.couch_iso_size
             error_list = {i: 0.0 for i in range(1,9)}
-            lin = [folder_name[3:13], f"{gantry_iso_size:2.3f}", f"{gantry_iso_size:2.3f}", f"{gantry_coll_iso_size:2.3f}", f"{couch_iso_size:2.3f}"]
+            lin = [folder_name[3:13], f"{gantry_iso_size:2.3f}", f"{collimator_iso_size:2.3f}", f"{gantry_coll_iso_size:2.3f}", f"{couch_iso_size:2.3f}"]
             #print(wl.cax2bb_distance(metric='median'))
             #print(wl.cax2bb_distance(metric='max'))
 
@@ -191,6 +195,7 @@ for folder in root_folders:
             os.rename(folder,folder[0:-1] + 'analisado')
         except:
             print(folder + ': Pasta nao possui imagens para analise')
+    plt.close()
 
 error_file_name = root + '/Analises' + '/Historico_WL.dat'
 file_exists = os.path.exists(error_file_name)
