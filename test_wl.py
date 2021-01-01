@@ -47,8 +47,8 @@ def rename_wl(root):
 #lista_resultado = []
 lista_resultado = [['Data', 'Iso Gantry', 'Iso Colimador', 'Iso Gantry e Colimador', 'Iso Mesa',
                    'G0C0T0', 'G90C0T0', 'G180C0T0', 'G0C270T0', 'G0C180T0', 'G270C0T0', 'G0C90T0', 'G0C0T270', 'G0C0T90']]
-root = './WL3'
-rename_wl(root)
+root = './WL_IOSP'
+#rename_wl(root)
 root_folders = glob.glob(root + '/*')
 #root_folders = ['./WL/WL_20200706']
 root_folders.sort()
@@ -135,10 +135,6 @@ for folder in root_folders:
                 dcm_file = path_to_dcm_file + '/' + 'gantry90.dcm'
                 gantry = 90.0
                 colimador = 0.0
-            elif nome[i] == '9':
-                dcm_file = path_to_dcm_file + '/' + 'coll180.dcm'
-                gantry = 0.0
-                colimador = 180.0
             else:
                 dcm_file = path_to_dcm_file + '/' + 'gantry0.dcm'
                 gantry = 0.0
@@ -192,7 +188,7 @@ for folder in root_folders:
             for key,value in error_list.items():
                 lin.append(f"{value:2.3f}")
             lista_resultado.append(lin)
-            os.rename(folder,folder[0:-1] + 'analisado')
+            os.rename(folder,folder + '_analisado')
         except:
             print(folder + ': Pasta nao possui imagens para analise')
     plt.close()
