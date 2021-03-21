@@ -192,6 +192,7 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
                     sad = ds[0x3002,0x0022].value
                     sid = ds[0x3002,0x0026].value
                     x_res=ds[0x3002,0x0011].value[0]
+                    x_res_str = x_res
                     dpmm = (1/x_res)*sid/sad #pontos por mm no isocentro
                     translacao = [translacao[0]/dpmm,translacao[1]/dpmm] # deslocamento em mm no painel
                 except:
@@ -209,11 +210,11 @@ def janela_importar_img(eh_dicom): #Importa imagem a ser analisada
                 sad = 1000.0
                 sid = 1600.0
                 try:
-                    dpi = (tiff_meta_dict['YResolution'][0][0]/tiff_meta_dict['YResolution'][0][1])
-                    x_res = (sid/sad)/(dpi/25.4)
+                    dpi = (tiff_meta_dict['YResolution'][0][0]/tiff_meta_dict['YResolution'][0][1]) #dpi projetada no isocentro para imagens do Iview
+                    x_res = (sid/sad)/(dpi/25.4) # distancia entre detectores no SID (Ex.: 160 cm no Synergy Full com Iview)
                     x_res_str = f"{x_res:2.3f}"
                 except:
-                    dpi = 75
+                    dpi = 75 #se não encontra resolução, assume uma resolução de 75dpi
                     x_res = (sid/sad)/(dpi/25.4)
                     x_res_str = f"{x_res:2.3f}"
                 translacao = [0.0,0.0]
